@@ -1,0 +1,19 @@
+{
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.insertSpaces": true,
+    "editor.rulers": [80],
+    "editor.tabSize": 4,
+    "material-icon-theme.folders.associations": {
+        "avatar": "public",
+        "emailbuilder": "mail",
+        "form": "docs",
+        "form2": "docs",
+        "loading": "aws",
+        "main": "template",
+        "mall": "home",
+        "nginx": "server",
+        "store": "cart",
+        "table": "log"
+    }
+}
