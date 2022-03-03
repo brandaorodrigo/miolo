@@ -18,13 +18,8 @@ class MyGame extends Phaser.Scene {
 
         this.load.spritesheet('player', 'assets/rod.png', {
             frameWidth: 32,
-            frameHeight: 32,
+            frameHeight: 64,
         });
-    }
-
-    render() {
-        game.debug.cameraInfo(game.camera, 32, 32);
-        game.debug.spriteCoords(player, 32, 500);
     }
 
     create() {
@@ -119,14 +114,14 @@ class MyGame extends Phaser.Scene {
 
         if (this.cursors.down.isDown) {
             this.player.body
-                .setSize(30, 30, false)
-                .setOffset(this.player.frame.x, this.player.frame.y + 16);
+                .setSize(22, 32, false)
+                .setOffset(this.player.frame.x + 5, this.player.frame.y + 28);
         }
 
         if (this.cursors.down.isUp) {
             this.player.body
-                .setSize(30, 46, false)
-                .setOffset(this.player.frame.x, this.player.frame.y);
+                .setSize(22, 42, false)
+                .setOffset(this.player.frame.x + 5, this.player.frame.y + 18);
         }
 
         if (this.cursors.replay.isDown) {
@@ -153,7 +148,7 @@ const config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 1000 },
-            debug: true,
+            debug: false,
         },
     },
 };
