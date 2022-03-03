@@ -16,9 +16,24 @@ class MyGame extends Phaser.Scene {
         this.load.image('tiles2', 'assets/ground.png');
         this.load.tilemapTiledJSON('map2', 'assets/ground.json');
 
-        this.load.spritesheet('player', 'assets/rod.png', {
+        this.load.spritesheet('obstacle', 'assets/obstacle.png', {
+            frameWidth: 32,
+            frameHeight: 32,
+        });
+
+        this.load.spritesheet('obstacle2', 'assets/obstacle.png', {
             frameWidth: 32,
             frameHeight: 64,
+        });
+
+        this.load.spritesheet('obstacle3', 'assets/obstacle.png', {
+            frameWidth: 96,
+            frameHeight: 32,
+        });
+
+        this.load.spritesheet('player', 'assets/rod.png', {
+            frameWidth: 64,
+            frameHeight: 32,
         });
     }
 
@@ -69,6 +84,51 @@ class MyGame extends Phaser.Scene {
             jump: Phaser.Input.Keyboard.KeyCodes.W,
             replay: Phaser.Input.Keyboard.KeyCodes.R,
         });
+
+        const platforms = this.physics.add.staticGroup();
+
+        let last_obstacle = 300;
+
+        for (let i = 0; i < 100; ++i) {
+            const obstacle_distance = Phaser.Math.Between(300, 1000);
+            const obstacle_type = Phaser.Math.Between(1, 4);
+
+            let y = 0;
+            let obs = '';
+
+            if (obstacle_type === 1) {
+                y = 280;
+                obs = 'obstacle';
+            }
+
+            if (obstacle_type === 2) {
+                y = 260;
+                obs = 'obstacle2';
+            }
+
+            if (obstacle_type === 3) {
+                y = 240;
+                obs = 'obstacle';
+            }
+
+            if (obstacle_type === 4) {
+                y = 220;
+                obs = 'obstacle2';
+            }
+
+            last_obstacle += obstacle_distance;
+
+            const platform = platforms.create(last_obstacle, y, obs);
+
+            const body = platform.body;
+            body.updateFromGameObject();
+        }
+
+        this.physics.add.collider(platforms, this.player, () => {
+            this.currentSpeed = 0;
+            this.player.setVelocityX(0);
+            this.scene.restart();
+        });
     }
 
     update_player() {
@@ -101,7 +161,7 @@ class MyGame extends Phaser.Scene {
             if (!this.jumping && this.player.body.onFloor()) {
                 this.jumping = true;
                 this.player.body.setVelocityY(
-                    this.currentSpeed > 200 ? -400 : -250
+                    this.currentSpeed > 200 ? -390 : -270
                 );
             }
         }
@@ -126,7 +186,8 @@ class MyGame extends Phaser.Scene {
 
         if (this.cursors.replay.isDown) {
             this.currentSpeed = 0;
-            this.player.setVelocityX(-4000);
+            this.player.setVelocityX(0);
+            this.scene.restart();
         }
     }
 
@@ -148,7 +209,7 @@ const config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 1000 },
-            debug: false,
+            debug: true,
         },
     },
 };
