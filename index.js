@@ -1,45 +1,26 @@
-const stage = '';
-let fix_stage = stage.toLowerCase().replace(/[^A-Za-z]/g, '');
+const urlParams = new URLSearchParams(window.location.search);
+const stage = urlParams.get('o');
+let fix_stage = stage;
+if (!stage) fix_stage = 'dumontcityskateboard';
+fix_stage = fix_stage.toLowerCase().replace(/[^A-Za-z]/g, '');
 if (!fix_stage) fix_stage = 'dumontcityskateboard';
 if (fix_stage.length > 40) fix_stage = fix_stage.slice(0, 40);
-console.log(fix_stage);
 
-/*
-while (fix_stage.length < 40) {
-    let temp = fix_stage.split('');
-    let reverse = temp.reverse();
-    fix_stage += reverse.join('');
-}
-*/
+const index_alphax =
+    '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-const index_alpha = 'abcdefghijklmnopqrstuvwxyz';
-const index_alpha2 = '01230123012301230123012301';
-const index_alpha3 = '98765439876543987654398122';
-
-const decode = [];
+const oo = [];
 
 for (let i = 0; i < fix_stage.length; ++i) {
-    let index = index_alpha.indexOf(fix_stage.charAt(i));
+    let index = index_alphax.indexOf(fix_stage.charAt(i));
     if (index < 0) index = 0;
-    decode.push({
-        distance: Number(index_alpha3.charAt(index)),
-        type: Number(index_alpha2.charAt(index)),
-    });
+    oo.push(index);
+    //oo.push(Phaser.Math.Between(0, 62));
 }
-
-console.log(decode);
-
-/*
-for (let i = 0; i < 20; ++i) {
-    const distance = Phaser.Math.Between(3, 4);
-    const type = Phaser.Math.Between(1, 4);
-    decode.push({ distance, type });
-}
-*/
 
 let record = window.localStorage.getItem(stage)
     ? Number(window.localStorage.getItem(stage))
-    : 0;
+    : null;
 
 class MyGame extends Phaser.Scene {
     constructor() {
@@ -47,7 +28,6 @@ class MyGame extends Phaser.Scene {
         this.maxSpeed = 600;
         this.currentSpeed = 0;
         this.jumping = false;
-        this.allSpeed = 0;
         this.allTime = 0;
         this.timer = new Phaser.Time.TimerEvent();
     }
@@ -121,8 +101,6 @@ class MyGame extends Phaser.Scene {
             true
         );
 
-        // configura controles
-
         this.cursors = this.input.keyboard.addKeys({
             down: Phaser.Input.Keyboard.KeyCodes.S,
             left: Phaser.Input.Keyboard.KeyCodes.A,
@@ -145,45 +123,45 @@ class MyGame extends Phaser.Scene {
 
         let last_obstacle = 300;
 
-        //for (let i = 0; i < 40; ++i) {
-        //const obstacle_distance = Phaser.Math.Between(300, 1000);
-        //const obstacle_type = Phaser.Math.Between(1, 4);
-        decode.forEach(({ distance, type }) => {
+        oo.forEach((cc) => {
+            let x = 300;
             let y = 280;
             let obs = 'obstacle';
 
-            if (type === 0) {
+            if (cc > 0 && cc < 16) {
+                x = 300;
                 y = 280;
                 obs = 'obstacle';
             }
 
-            if (type === 1) {
+            if (cc > 16 && cc < 30) {
+                x = 600;
                 y = 260;
                 obs = 'obstacle2';
             }
 
-            if (type === 2) {
+            if (cc > 30 && cc < 45) {
+                x = 800;
                 y = 240;
                 obs = 'obstacle';
             }
 
-            if (type === 3) {
+            if (cc > 45) {
+                x = 800;
                 y = 220;
                 obs = 'obstacle2';
             }
 
-            last_obstacle += distance * 124;
+            last_obstacle += x;
+
             const platform = platforms.create(last_obstacle, y, obs);
             const body = platform.body;
             body.updateFromGameObject();
         });
-        //}
 
         this.physics.add.collider(platforms, this.player, () => {
             this.currentSpeed = 0;
             this.player.setVelocityX(0);
-            this.score = 0;
-            this.allSpeed = 0;
             this.allTime = 0;
             this.scene.restart();
         });
@@ -195,19 +173,17 @@ class MyGame extends Phaser.Scene {
         );
 
         this.physics.add.collider(end, this.player, () => {
-            if (this.score < record) {
-                record = this.score;
+            if (record === null || this.allTime < Number(record)) {
+                record = this.allTime;
                 window.localStorage.setItem(stage, String(record));
             }
             this.currentSpeed = 0;
             this.player.setVelocityX(0);
-            this.score = 0;
-            this.allSpeed = 0;
             this.allTime = 0;
             this.scene.restart();
         });
 
-        this.scoreText = this.add.text(6, 85, this.score, {
+        this.scoreText = this.add.text(6, 85, '00:00,0', {
             font: '30px Arial',
             fill: '#000',
         });
@@ -217,25 +193,17 @@ class MyGame extends Phaser.Scene {
             fill: '#000',
         });
 
-        this.scoreText.setText(this.score);
-
         this.trigger = this.time.addEvent({
             callback: this.timer_score,
             callbackScope: this,
-            delay: 100, // 1000 = 1 second
+            delay: 10,
             loop: true,
         });
     }
 
     timer_score() {
-        this.allSpeed += this.currentSpeed;
         this.allTime += 1;
-        const media = this.allSpeed / this.allTime;
-        this.score = ((media * 100) / 570).toFixed(2);
-        if (this.score < 1) this.score = 0;
-        //this.scoreText.setText(this.score + ' %');
         this.scoreText.setText(this.allTime);
-        //this.scoreText.setText(this.player.x);
     }
 
     update_player() {
@@ -299,8 +267,6 @@ class MyGame extends Phaser.Scene {
         if (this.cursors.replay.isDown) {
             this.currentSpeed = 0;
             this.player.setVelocityX(0);
-            this.score = 0;
-            this.allSpeed = 0;
             this.allTime = 0;
             this.scene.restart();
         }
