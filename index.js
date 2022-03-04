@@ -1,6 +1,6 @@
 //const stage = 'teste se os estagios vao ficar randomicos mesmo';
 
-const stage = 'rafael';
+const stage = 'oloolooloolooloolo';
 
 let fix_stage = stage.toLowerCase().replace(/[^A-Za-z]/g, '');
 if (fix_stage.length > 40) fix_stage = fix_stage.slice(0, 40);
@@ -221,7 +221,7 @@ class MyGame extends Phaser.Scene {
         this.trigger = this.time.addEvent({
             callback: this.timer_score,
             callbackScope: this,
-            delay: 300, // 1000 = 1 second
+            delay: 100, // 1000 = 1 second
             loop: true,
         });
     }
@@ -230,9 +230,10 @@ class MyGame extends Phaser.Scene {
         this.allSpeed += this.currentSpeed;
         this.allTime += 1;
         const media = this.allSpeed / this.allTime;
-        this.score = (media * 100) / 600;
+        this.score = ((media * 100) / 570).toFixed(2);
         if (this.score < 1) this.score = 0;
-        this.scoreText.setText(this.score.toFixed(2) + ' %');
+        //this.scoreText.setText(this.score + ' %');
+        this.scoreText.setText(this.allTime);
         //this.scoreText.setText(this.player.x);
     }
 
