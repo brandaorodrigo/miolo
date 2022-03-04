@@ -1,9 +1,8 @@
-//const stage = 'teste se os estagios vao ficar randomicos mesmo';
-
-const stage = 'oloolooloolooloolo';
-
+const stage = '';
 let fix_stage = stage.toLowerCase().replace(/[^A-Za-z]/g, '');
+if (!fix_stage) fix_stage = 'dumontcityskateboard';
 if (fix_stage.length > 40) fix_stage = fix_stage.slice(0, 40);
+console.log(fix_stage);
 
 /*
 while (fix_stage.length < 40) {
@@ -15,20 +14,24 @@ while (fix_stage.length < 40) {
 
 const index_alpha = 'abcdefghijklmnopqrstuvwxyz';
 const index_alpha2 = '01230123012301230123012301';
-const index_alpha3 = '65432106543210654321065432';
+const index_alpha3 = '98765439876543987654398122';
 
 const decode = [];
+
 for (let i = 0; i < fix_stage.length; ++i) {
-    const index = index_alpha.indexOf(fix_stage.charAt(i));
+    let index = index_alpha.indexOf(fix_stage.charAt(i));
+    if (index < 0) index = 0;
     decode.push({
         distance: Number(index_alpha3.charAt(index)),
         type: Number(index_alpha2.charAt(index)),
     });
 }
 
+console.log(decode);
+
 /*
-for (let i = 0; i < 40; ++i) {
-    const distance = Phaser.Math.Between(3, 19);
+for (let i = 0; i < 20; ++i) {
+    const distance = Phaser.Math.Between(3, 4);
     const type = Phaser.Math.Between(1, 4);
     decode.push({ distance, type });
 }
@@ -37,8 +40,6 @@ for (let i = 0; i < 40; ++i) {
 let record = window.localStorage.getItem(stage)
     ? Number(window.localStorage.getItem(stage))
     : 0;
-
-console.log(decode);
 
 class MyGame extends Phaser.Scene {
     constructor() {
@@ -103,7 +104,7 @@ class MyGame extends Phaser.Scene {
         this.physics.world.bounds.height = ground.height;
 
         this.player = this.physics.add.sprite(40, 240, 'player');
-        this.player.body.bounce.set(0.3);
+        //this.player.body.bounce.set(0.3);
         this.player.setCollideWorldBounds(true);
 
         //collider.setCollisionByProperty({ collider: true });
@@ -171,7 +172,7 @@ class MyGame extends Phaser.Scene {
                 obs = 'obstacle2';
             }
 
-            last_obstacle += distance * 81;
+            last_obstacle += distance * 124;
             const platform = platforms.create(last_obstacle, y, obs);
             const body = platform.body;
             body.updateFromGameObject();
@@ -194,7 +195,7 @@ class MyGame extends Phaser.Scene {
         );
 
         this.physics.add.collider(end, this.player, () => {
-            if (this.score > record) {
+            if (this.score < record) {
                 record = this.score;
                 window.localStorage.setItem(stage, String(record));
             }
@@ -323,7 +324,7 @@ const config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 1000 },
-            debug: false,
+            debug: true,
         },
     },
 };
