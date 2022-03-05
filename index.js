@@ -22,9 +22,38 @@ let record = window.localStorage.getItem(stage)
     ? Number(window.localStorage.getItem(stage))
     : null;
 
+class Intro extends Phaser.Scene {
+    constructor() {
+        super('Intro');
+    }
+
+    create() {
+        this.recordText = this.add.text(160, 120, record, {
+            font: '30px Courier New',
+            fill: '#000',
+        });
+        this.cursors = this.input.keyboard.addKeys({
+            start: Phaser.Input.Keyboard.KeyCodes.ENTER,
+        });
+    }
+
+    update() {
+        if (this.cursors.start.isDown) {
+            this.recordText.setText('READY...');
+            this.time.addEvent({
+                delay: 2000,
+                loop: false,
+                callback: () => {
+                    this.scene.start('MyGame');
+                },
+            });
+        }
+    }
+}
+
 class MyGame extends Phaser.Scene {
     constructor() {
-        super();
+        super('MyGame');
         this.maxSpeed = 600;
         this.currentSpeed = 0;
         this.jumping = false;
@@ -180,7 +209,7 @@ class MyGame extends Phaser.Scene {
             this.currentSpeed = 0;
             this.player.setVelocityX(0);
             this.allTime = 0;
-            this.scene.restart();
+            this.scene.start('Intro');
         });
 
         this.scoreText = this.add.text(6, 85, '00:00,0', {
@@ -292,7 +321,7 @@ const config = {
     zoom: 2,
     backgroundColor: '0xffffff',
     parent: 'game',
-    scene: MyGame,
+    scene: [Intro, MyGame],
     physics: {
         default: 'arcade',
         arcade: {
