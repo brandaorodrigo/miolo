@@ -142,13 +142,13 @@ class MyGame extends Phaser.Scene {
 
             if (cc > 30 && cc < 45) {
                 x = 800;
-                y = 240;
+                y = 230;
                 obs = 'obstacle';
             }
 
             if (cc > 45) {
                 x = 800;
-                y = 220;
+                y = 215;
                 obs = 'obstacle2';
             }
 
@@ -184,12 +184,12 @@ class MyGame extends Phaser.Scene {
         });
 
         this.scoreText = this.add.text(6, 85, '00:00,0', {
-            font: '30px Arial',
+            font: '30px Courier New',
             fill: '#000',
         });
 
         this.recordText = this.add.text(320, 85, record, {
-            font: '10px Arial',
+            font: '10px Courier New',
             fill: '#000',
         });
 
@@ -203,7 +203,14 @@ class MyGame extends Phaser.Scene {
 
     timer_score() {
         this.allTime += 1;
-        this.scoreText.setText(this.allTime);
+        const fix_allTime = new Date(this.allTime * 10);
+        this.scoreText.setText(
+            fix_allTime.getMinutes() +
+                ':' +
+                fix_allTime.getSeconds() +
+                ',' +
+                String(fix_allTime.getMilliseconds()).slice(0, 1)
+        );
     }
 
     update_player() {
@@ -241,7 +248,7 @@ class MyGame extends Phaser.Scene {
             if (!this.jumping && this.player.body.onFloor()) {
                 this.jumping = true;
                 this.player.body.setVelocityY(
-                    this.currentSpeed > 200 ? -390 : -270
+                    this.currentSpeed > 200 ? -400 : -280
                 );
             }
         }
@@ -254,14 +261,14 @@ class MyGame extends Phaser.Scene {
 
         if (this.cursors.down.isDown) {
             this.player.body
-                .setSize(22, 32, false)
-                .setOffset(this.player.frame.x + 5, this.player.frame.y + 28);
+                .setSize(22, 36, false)
+                .setOffset(this.player.frame.x + 5, this.player.frame.y + 26);
         }
 
         if (this.cursors.down.isUp) {
             this.player.body
-                .setSize(22, 42, false)
-                .setOffset(this.player.frame.x + 5, this.player.frame.y + 18);
+                .setSize(22, 48, false)
+                .setOffset(this.player.frame.x + 5, this.player.frame.y + 14);
         }
 
         if (this.cursors.replay.isDown) {
