@@ -4,7 +4,16 @@ let o = urlParams.get('o') ?? '';
 let stage = o.replace(/[^0-9]/g, '');
 if (stage.length > 120) stage = stage.slice(0, 119);
 
-console.log(stage);
+if (!stage.length) {
+    let temp = '';
+    for (let i = 0; i < 10; i++) {
+        const number = Phaser.Math.Between(1, 6);
+        temp = temp + '' + number;
+        const zeros = Phaser.Math.Between(1, 4);
+        for (z = 0; z < zeros; z++) temp = temp + '0';
+    }
+    stage = temp;
+}
 
 let record = window.localStorage.getItem(stage)
     ? Number(window.localStorage.getItem(stage))
@@ -125,7 +134,7 @@ class MyGame extends Phaser.Scene {
         // player ==============================================================
 
         const playerX = width / 3;
-        this.player = this.physics.add.sprite(playerX, height - 300, 'player');
+        this.player = this.physics.add.sprite(playerX, height - 200, 'player');
         this.cameras.main.startFollow(this.player, false, 1, 1, playerX * -1);
         this.player.setCollideWorldBounds(true).setDepth(30);
 
@@ -147,7 +156,7 @@ class MyGame extends Phaser.Scene {
         // obstacle ============================================================
 
         const obstacle = this.physics.add.staticGroup();
-        let obstacleWidth = 2000;
+        let obstacleWidth = 4000;
         let countZeros = 0;
         for (let i = 0; i < stage.length; i++) {
             const number = Number(stage[i]);
@@ -195,7 +204,7 @@ class MyGame extends Phaser.Scene {
             }
             if (number === 0 && countZeros < 4) {
                 countZeros += 1;
-                obstacleWidth += 800;
+                obstacleWidth += 1000;
             }
         }
         this.physics.add.collider(obstacle, this.player, () => {
@@ -206,7 +215,7 @@ class MyGame extends Phaser.Scene {
         // finish ==============================================================
 
         const finish = this.physics.add.staticSprite(
-            obstacleWidth + 600,
+            obstacleWidth + 1000,
             height - 300,
             'finish'
         );
@@ -216,6 +225,7 @@ class MyGame extends Phaser.Scene {
                 record = this.allTime;
                 window.localStorage.setItem(stage, String(record));
             }
+            this.reset();
             this.scene.start('Intro');
         });
 
@@ -369,7 +379,7 @@ const config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 1000 },
-            debug: true,
+            debug: false,
         },
     },
 };
