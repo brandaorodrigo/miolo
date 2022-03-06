@@ -9,7 +9,7 @@ if (!stage.length) {
     for (let i = 0; i < 10; i++) {
         const number = Phaser.Math.Between(1, 6);
         temp = temp + '' + number;
-        const zeros = Phaser.Math.Between(1, 4);
+        const zeros = Phaser.Math.Between(0, 4);
         for (z = 0; z < zeros; z++) temp = temp + '0';
     }
     stage = temp;
@@ -19,9 +19,9 @@ let record = window.localStorage.getItem(stage)
     ? Number(window.localStorage.getItem(stage))
     : null;
 
-class Intro extends Phaser.Scene {
+class Menu extends Phaser.Scene {
     constructor() {
-        super('Intro');
+        super('Menu');
     }
 
     create() {
@@ -41,16 +41,16 @@ class Intro extends Phaser.Scene {
                 delay: 2000,
                 loop: false,
                 callback: () => {
-                    this.scene.start('MyGame');
+                    this.scene.start('Game');
                 },
             });
         }
     }
 }
 
-class MyGame extends Phaser.Scene {
+class Game extends Phaser.Scene {
     constructor() {
-        super('MyGame');
+        super('Game');
         this.maxSpeed = 2600;
         this.currentSpeed = 0;
         this.jumping = false;
@@ -59,26 +59,29 @@ class MyGame extends Phaser.Scene {
     }
 
     preload() {
-        this.load.setBaseURL('//localhost:88/miolo2/');
-        this.load.image('back', 'assets/back.png');
+        // scenario ============================================================
 
+        this.load.image('sky', 'assets/sky.png');
+        this.load.image('back', 'assets/back.png');
         this.load.image('tiles', 'assets/map.png');
         this.load.tilemapTiledJSON('map', 'assets/map.json');
-
         this.load.image('tiles2', 'assets/ground.png');
         this.load.tilemapTiledJSON('map2', 'assets/ground.json');
+        this.load.image('first', 'assets/first.png');
+        this.load.image('mount', 'assets/mount.png');
+
+        // ground ==============================================================
 
         this.load.image('ground', 'assets/ground.png');
 
-        this.load.image('sky', 'assets/sky.png');
-
-        this.load.image('first', 'assets/first.png');
-        this.load.image('mount', 'assets/mount.png');
+        // player ==============================================================
 
         this.load.spritesheet('player', 'assets/sk8r.png', {
             frameWidth: 100,
             frameHeight: 200,
         });
+
+        // finish ==============================================================
 
         this.load.spritesheet('finish', 'assets/finish.png', {
             frameWidth: 400,
@@ -116,13 +119,6 @@ class MyGame extends Phaser.Scene {
             frameWidth: 600,
             frameHeight: 100,
         });
-    }
-
-    reset() {
-        this.currentSpeed = 0;
-        this.player.setVelocityX(0);
-        this.allTime = 0;
-        this.scene.restart();
     }
 
     create() {
@@ -170,31 +166,37 @@ class MyGame extends Phaser.Scene {
                 y = 150;
                 obs = '1x1';
             }
+
             if (number === 2) {
                 x = 100;
                 y = 200;
                 obs = '2x2';
             }
+
             if (number === 3) {
                 x = 50;
                 y = 300;
                 obs = '1x1_air';
             }
+
             if (number === 4) {
                 x = 100;
                 y = 350;
                 obs = '2x2_air';
             }
+
             if (number === 5) {
                 x = 200;
                 y = 200;
                 obs = '4x2';
             }
+
             if (number === 6) {
                 x = 300;
                 y = 150;
                 obs = '6x1';
             }
+
             if (number !== 0 && obs !== '') {
                 countZeros = 0;
                 obstacleWidth += x;
@@ -202,14 +204,17 @@ class MyGame extends Phaser.Scene {
                 current.body.updateFromGameObject();
                 obstacleWidth += x;
             }
+
             if (number === 0 && countZeros < 4) {
                 countZeros += 1;
                 obstacleWidth += 1000;
             }
         }
+
         this.physics.add.collider(obstacle, this.player, () => {
-            this.reset();
+            this.update_reset();
         });
+
         obstacle.setDepth(20);
 
         // finish ==============================================================
@@ -225,8 +230,8 @@ class MyGame extends Phaser.Scene {
                 record = this.allTime;
                 window.localStorage.setItem(stage, String(record));
             }
-            this.reset();
-            this.scene.start('Intro');
+            this.update_reset();
+            this.scene.start('Menu');
         });
 
         // sky =================================================================
@@ -270,23 +275,25 @@ class MyGame extends Phaser.Scene {
         });
 
         this.trigger = this.time.addEvent({
-            callback: this.timer_score,
+            callback: () => {
+                this.allTime += 1;
+                const fix_allTime = new Date(this.allTime * 10);
+                this.scoreText.setText(
+                    fix_allTime.getMinutes() +
+                        ':' +
+                        fix_allTime.getSeconds() +
+                        ',' +
+                        String(fix_allTime.getMilliseconds()).slice(0, 1)
+                );
+            },
             callbackScope: this,
             delay: 10,
             loop: true,
         });
     }
 
-    timer_score() {
-        this.allTime += 1;
-        const fix_allTime = new Date(this.allTime * 10);
-        this.scoreText.setText(
-            fix_allTime.getMinutes() +
-                ':' +
-                fix_allTime.getSeconds() +
-                ',' +
-                String(fix_allTime.getMilliseconds()).slice(0, 1)
-        );
+    update() {
+        this.update_player();
     }
 
     update_player() {
@@ -348,12 +355,15 @@ class MyGame extends Phaser.Scene {
         }
 
         if (this.cursors.replay.isDown) {
-            this.reset();
+            this.update_reset();
         }
     }
 
-    update() {
-        this.update_player();
+    update_reset() {
+        this.currentSpeed = 0;
+        this.player.setVelocityX(0);
+        this.allTime = 0;
+        this.scene.restart();
     }
 }
 
@@ -364,17 +374,14 @@ const config = {
     type: Phaser.CANVAS,
     pixelArt: true,
     scale: {
-        // Fit to window
         mode: Phaser.Scale.FIT,
-        // Center vertically and horizontally
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
     width: _width,
     height: _height,
-    //renderer: resize(Number(_width), Number(_height)),
     backgroundColor: '0xffffff',
     parent: 'game',
-    scene: [Intro, MyGame],
+    scene: [Menu, Game],
     physics: {
         default: 'arcade',
         arcade: {
