@@ -1,22 +1,10 @@
 const urlParams = new URLSearchParams(window.location.search);
-const stage = urlParams.get('o');
-let fix_stage = stage;
-if (!stage) fix_stage = 'dumontcityskateboard';
-fix_stage = fix_stage.toLowerCase().replace(/[^A-Za-z]/g, '');
-if (!fix_stage) fix_stage = 'dumontcityskateboard';
-if (fix_stage.length > 40) fix_stage = fix_stage.slice(0, 40);
 
-const index_alphax =
-    '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+let o = urlParams.get('o') ?? '';
+let stage = o.replace(/[^0-9]/g, '');
+if (stage.length > 120) stage = stage.slice(0, 119);
 
-const oo = [];
-
-for (let i = 0; i < fix_stage.length; ++i) {
-    let index = index_alphax.indexOf(fix_stage.charAt(i));
-    if (index < 0) index = 0;
-    oo.push(index);
-    //oo.push(Phaser.Math.Between(0, 62));
-}
+console.log(stage);
 
 let record = window.localStorage.getItem(stage)
     ? Number(window.localStorage.getItem(stage))
@@ -54,7 +42,7 @@ class Intro extends Phaser.Scene {
 class MyGame extends Phaser.Scene {
     constructor() {
         super('MyGame');
-        this.maxSpeed = 600;
+        this.maxSpeed = 2600;
         this.currentSpeed = 0;
         this.jumping = false;
         this.allTime = 0;
@@ -62,7 +50,7 @@ class MyGame extends Phaser.Scene {
     }
 
     preload() {
-        this.load.setBaseURL('//localhost:88/miolo/');
+        this.load.setBaseURL('//localhost:88/miolo2/');
         this.load.image('back', 'assets/back.png');
 
         this.load.image('tiles', 'assets/map.png');
@@ -71,64 +59,175 @@ class MyGame extends Phaser.Scene {
         this.load.image('tiles2', 'assets/ground.png');
         this.load.tilemapTiledJSON('map2', 'assets/ground.json');
 
-        this.load.spritesheet('obstacle', 'assets/obstacle.png', {
-            frameWidth: 32,
-            frameHeight: 32,
+        this.load.image('ground', 'assets/ground.png');
+
+        this.load.image('sky', 'assets/sky.png');
+
+        this.load.image('first', 'assets/first.png');
+        this.load.image('mount', 'assets/mount.png');
+
+        this.load.spritesheet('player', 'assets/sk8r.png', {
+            frameWidth: 100,
+            frameHeight: 200,
         });
 
-        this.load.spritesheet('obstacle2', 'assets/obstacle.png', {
-            frameWidth: 32,
-            frameHeight: 64,
+        this.load.spritesheet('finish', 'assets/finish.png', {
+            frameWidth: 400,
+            frameHeight: 400,
         });
 
-        this.load.spritesheet('player', 'assets/rod.png', {
-            frameWidth: 64,
-            frameHeight: 32,
+        // obstacle ============================================================
+
+        this.load.spritesheet('1x1', 'assets/obstacle.png', {
+            frameWidth: 100,
+            frameHeight: 100,
         });
 
-        this.load.spritesheet('end', 'assets/end.png', {
-            frameWidth: 32,
-            frameHeight: 96,
+        this.load.spritesheet('2x2', 'assets/obstacle.png', {
+            frameWidth: 200,
+            frameHeight: 200,
+        });
+
+        this.load.spritesheet('1x1_air', 'assets/obstacle.png', {
+            frameWidth: 100,
+            frameHeight: 100,
+        });
+
+        this.load.spritesheet('2x2_air', 'assets/obstacle.png', {
+            frameWidth: 200,
+            frameHeight: 200,
+        });
+
+        this.load.spritesheet('4x2', 'assets/obstacle.png', {
+            frameWidth: 400,
+            frameHeight: 200,
+        });
+
+        this.load.spritesheet('6x1', 'assets/obstacle.png', {
+            frameWidth: 600,
+            frameHeight: 100,
         });
     }
 
+    reset() {
+        this.currentSpeed = 0;
+        this.player.setVelocityX(0);
+        this.allTime = 0;
+        this.scene.restart();
+    }
+
     create() {
-        this.add
-            .tileSprite(0, 16, 10000, 240, 'back')
-            .setOrigin(0, 0)
-            .setScrollFactor(0.2);
+        // config ==============================================================
 
-        const map = this.make.tilemap({ key: 'map2' });
-
-        const tileset = map.addTilesetImage('ground', 'tiles2');
-        const ground = map.createLayer('ground', tileset, 0, 0);
-        //const collider = map.createLayer('colider', tileset, 0, 0);
-        //const fundo = map.createLayer('fundo', tileset, 0, 0);
-        //fundo.setDepth(10);
-
-        ground.setCollisionByProperty({ collider: true });
-
+        const { width, height } = this.sys.game.canvas;
         this.physics.world.setFPS(44);
-        this.physics.world.bounds.width = ground.width;
-        this.physics.world.bounds.height = ground.height;
 
-        this.player = this.physics.add.sprite(40, 240, 'player');
-        //this.player.body.bounce.set(0.3);
-        this.player.setCollideWorldBounds(true);
+        // player ==============================================================
 
-        //collider.setCollisionByProperty({ collider: true });
-        //this.physics.add.collider(this.player, collider);
+        const playerX = width / 3;
+        this.player = this.physics.add.sprite(playerX, height - 300, 'player');
+        this.cameras.main.startFollow(this.player, false, 1, 1, playerX * -1);
+        this.player.setCollideWorldBounds(true).setDepth(30);
+
+        // ground ==============================================================
+
+        const ground = this.physics.add.staticGroup();
+        let groundWidth = 0;
+        for (let i = 0; i < 200; i++) {
+            const current = ground.create(groundWidth, height - 50, 'ground');
+            current.body.updateFromGameObject();
+            groundWidth += 800;
+        }
+        this.cameras.main.setBounds(0, 0, groundWidth - 800, height);
+        this.physics.world.bounds.width = groundWidth - 800;
+        this.physics.world.bounds.height = height;
         this.physics.add.collider(this.player, ground);
+        ground.setDepth(20);
 
-        this.cameras.main.startFollow(this.player, false, 1, 1, -100);
+        // obstacle ============================================================
 
-        this.cameras.main.setBounds(
-            0,
-            0,
-            ground.layer.widthInPixels,
-            ground.layer.heightInPixels,
-            true
+        const obstacle = this.physics.add.staticGroup();
+        let obstacleWidth = 2000;
+        let countZeros = 0;
+        for (let i = 0; i < stage.length; i++) {
+            const number = Number(stage[i]);
+
+            let x = 0;
+            let y = 0;
+            let obs = '';
+
+            if (number === 1) {
+                x = 50;
+                y = 150;
+                obs = '1x1';
+            }
+            if (number === 2) {
+                x = 100;
+                y = 200;
+                obs = '2x2';
+            }
+            if (number === 3) {
+                x = 50;
+                y = 300;
+                obs = '1x1_air';
+            }
+            if (number === 4) {
+                x = 100;
+                y = 350;
+                obs = '2x2_air';
+            }
+            if (number === 5) {
+                x = 200;
+                y = 200;
+                obs = '4x2';
+            }
+            if (number === 6) {
+                x = 300;
+                y = 150;
+                obs = '6x1';
+            }
+            if (number !== 0 && obs !== '') {
+                countZeros = 0;
+                obstacleWidth += x;
+                const current = obstacle.create(obstacleWidth, height - y, obs);
+                current.body.updateFromGameObject();
+                obstacleWidth += x;
+            }
+            if (number === 0 && countZeros < 4) {
+                countZeros += 1;
+                obstacleWidth += 800;
+            }
+        }
+        this.physics.add.collider(obstacle, this.player, () => {
+            this.reset();
+        });
+        obstacle.setDepth(20);
+
+        // finish ==============================================================
+
+        const finish = this.physics.add.staticSprite(
+            obstacleWidth + 600,
+            height - 300,
+            'finish'
         );
+        finish.setDepth(20);
+        this.physics.add.collider(finish, this.player, () => {
+            if (record === null || this.allTime < Number(record)) {
+                record = this.allTime;
+                window.localStorage.setItem(stage, String(record));
+            }
+            this.scene.start('Intro');
+        });
+
+        // sky =================================================================
+
+        this.cameras.main.setBackgroundColor(0xdcdcdc);
+        this.add
+            .tileSprite(0, height - 500, width * 10, 800, 'sky')
+            .setScrollFactor(0.05)
+            .setDepth(10);
+
+        // cursors =============================================================
 
         this.cursors = this.input.keyboard.addKeys({
             down: Phaser.Input.Keyboard.KeyCodes.S,
@@ -148,69 +247,7 @@ class MyGame extends Phaser.Scene {
         });
         */
 
-        const platforms = this.physics.add.staticGroup();
-
-        let last_obstacle = 300;
-
-        oo.forEach((cc) => {
-            let x = 300;
-            let y = 280;
-            let obs = 'obstacle';
-
-            if (cc > 0 && cc < 16) {
-                x = 300;
-                y = 280;
-                obs = 'obstacle';
-            }
-
-            if (cc > 16 && cc < 30) {
-                x = 600;
-                y = 260;
-                obs = 'obstacle2';
-            }
-
-            if (cc > 30 && cc < 45) {
-                x = 800;
-                y = 230;
-                obs = 'obstacle';
-            }
-
-            if (cc > 45) {
-                x = 800;
-                y = 215;
-                obs = 'obstacle2';
-            }
-
-            last_obstacle += x;
-
-            const platform = platforms.create(last_obstacle, y, obs);
-            const body = platform.body;
-            body.updateFromGameObject();
-        });
-
-        this.physics.add.collider(platforms, this.player, () => {
-            this.currentSpeed = 0;
-            this.player.setVelocityX(0);
-            this.allTime = 0;
-            this.scene.restart();
-        });
-
-        let end = this.physics.add.staticSprite(
-            last_obstacle + 300,
-            240,
-            'end'
-        );
-
-        this.physics.add.collider(end, this.player, () => {
-            if (record === null || this.allTime < Number(record)) {
-                record = this.allTime;
-                window.localStorage.setItem(stage, String(record));
-            }
-            this.currentSpeed = 0;
-            this.player.setVelocityX(0);
-            this.allTime = 0;
-            this.scene.start('Intro');
-        });
+        // text ================================================================
 
         this.scoreText = this.add.text(6, 85, '00:00,0', {
             font: '30px Courier New',
@@ -250,14 +287,14 @@ class MyGame extends Phaser.Scene {
 
         if (this.cursors.right.isDown) {
             if (this.currentSpeed < this.maxSpeed) {
-                this.currentSpeed += 1;
+                this.currentSpeed += 6;
                 this.player.setVelocityX(this.currentSpeed);
             }
         }
 
         if (this.cursors.right.isUp) {
             if (this.currentSpeed > 0) {
-                this.currentSpeed -= 0.5;
+                this.currentSpeed -= 3;
                 this.player.setVelocityX(this.currentSpeed);
             } else {
                 this.currentSpeed = 0;
@@ -266,7 +303,7 @@ class MyGame extends Phaser.Scene {
 
         if (this.cursors.left.isDown) {
             if (this.currentSpeed !== 0) {
-                this.currentSpeed -= 2;
+                this.currentSpeed -= 6;
                 if (this.currentSpeed < 0) {
                     this.currentSpeed = 0;
                 }
@@ -277,7 +314,7 @@ class MyGame extends Phaser.Scene {
             if (!this.jumping && this.player.body.onFloor()) {
                 this.jumping = true;
                 this.player.body.setVelocityY(
-                    this.currentSpeed > 200 ? -400 : -280
+                    this.currentSpeed > 600 ? -740 : -400
                 );
             }
         }
@@ -290,21 +327,18 @@ class MyGame extends Phaser.Scene {
 
         if (this.cursors.down.isDown) {
             this.player.body
-                .setSize(22, 36, false)
-                .setOffset(this.player.frame.x + 5, this.player.frame.y + 26);
+                .setSize(100, 140, false)
+                .setOffset(this.player.frame.x, this.player.frame.y + 60);
         }
 
         if (this.cursors.down.isUp) {
             this.player.body
-                .setSize(22, 48, false)
-                .setOffset(this.player.frame.x + 5, this.player.frame.y + 14);
+                .setSize(100, 200, false)
+                .setOffset(this.player.frame.x, this.player.frame.y);
         }
 
         if (this.cursors.replay.isDown) {
-            this.currentSpeed = 0;
-            this.player.setVelocityX(0);
-            this.allTime = 0;
-            this.scene.restart();
+            this.reset();
         }
     }
 
@@ -313,12 +347,21 @@ class MyGame extends Phaser.Scene {
     }
 }
 
+const _width = window.innerWidth * window.devicePixelRatio;
+const _height = window.innerHeight * window.devicePixelRatio;
+
 const config = {
     type: Phaser.CANVAS,
     pixelArt: true,
-    width: 384,
-    height: 240,
-    zoom: 2,
+    scale: {
+        // Fit to window
+        mode: Phaser.Scale.FIT,
+        // Center vertically and horizontally
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+    },
+    width: _width,
+    height: _height,
+    //renderer: resize(Number(_width), Number(_height)),
     backgroundColor: '0xffffff',
     parent: 'game',
     scene: [Intro, MyGame],
