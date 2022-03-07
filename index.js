@@ -160,7 +160,7 @@ class Menu extends Phaser.Scene {
 class Game extends Phaser.Scene {
     constructor() {
         super('Game');
-        this.maxSpeed = 2000;
+        this.maxSpeed = 2200;
         this.currentSpeed = 0;
         this.jumping = false;
         this.allTime = 0;
@@ -429,7 +429,7 @@ class Game extends Phaser.Scene {
             }
         }
 
-        if (this.cursors.right.isUp) {
+        if (this.cursors.right.isUp && this.player.body.onFloor()) {
             if (this.currentSpeed > 0) {
                 this.currentSpeed -= 0.5;
                 this.player.setVelocityX(this.currentSpeed);
@@ -438,8 +438,7 @@ class Game extends Phaser.Scene {
             }
         }
 
-        // if (this.cursors.left.isDown && this.player.body.onFloor()) {
-        if (this.cursors.left.isDown) {
+        if (this.cursors.left.isDown && this.player.body.onFloor()) {
             if (this.currentSpeed !== 0) {
                 this.currentSpeed -= 4;
                 if (this.currentSpeed < 0) {
