@@ -181,13 +181,16 @@ class Game extends Phaser.Scene {
 
         // ground ==============================================================
 
-        this.load.image('ground', 'assets/ground.png');
+        this.load.spritesheet('ground', 'assets/ground.png', {
+            frameWidth: 500,
+            frameHeight: 50,
+        });
 
         // player ==============================================================
 
         this.load.spritesheet('player', 'assets/sk8r.png', {
-            frameWidth: 100,
-            frameHeight: 200,
+            frameWidth: 50,
+            frameHeight: 100,
         });
 
         // finish ==============================================================
@@ -239,21 +242,21 @@ class Game extends Phaser.Scene {
         // player ==============================================================
 
         const playerX = width / 3;
-        this.player = this.physics.add.sprite(playerX, height - 200, 'player');
+        this.player = this.physics.add.sprite(playerX, height - 300, 'player');
         this.cameras.main.startFollow(this.player, false, 1, 1, playerX * -1);
         this.player.setCollideWorldBounds(true).setDepth(30);
 
         // ground ==============================================================
 
         const ground = this.physics.add.staticGroup();
-        let groundWidth = 0;
+        let groundWidth = 250;
         for (let i = 0; i < 200; i++) {
-            const current = ground.create(groundWidth, height - 50, 'ground');
+            const current = ground.create(groundWidth, height - 25, 'ground');
             current.body.updateFromGameObject();
-            groundWidth += 800;
+            groundWidth += 500;
         }
-        this.cameras.main.setBounds(0, 0, groundWidth - 800, height);
-        this.physics.world.bounds.width = groundWidth - 800;
+        this.cameras.main.setBounds(0, 0, groundWidth - 500, height);
+        this.physics.world.bounds.width = groundWidth - 500;
         this.physics.world.bounds.height = height;
         this.physics.add.collider(this.player, ground);
         ground.setDepth(20);
@@ -348,7 +351,7 @@ class Game extends Phaser.Scene {
 
         this.cameras.main.setBackgroundColor(0xdcdcdc);
         this.add
-            .tileSprite(0, height - 500, width * 10, 800, 'sky')
+            .tileSprite(0, height - 300, width * 10, 500, 'sky')
             .setScrollFactor(0.05)
             .setDepth(10);
 
@@ -363,27 +366,21 @@ class Game extends Phaser.Scene {
             exit: Phaser.Input.Keyboard.KeyCodes.ESC,
         });
 
-        /*
-        this.cursors = this.input.keyboard.addKeys({
-            down: Phaser.Input.Keyboard.KeyCodes.DOWN,
-            left: Phaser.Input.Keyboard.KeyCodes.LEFT,
-            right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-            jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
-            replay: Phaser.Input.Keyboard.KeyCodes.R,
-        });
-        */
-
         // text ================================================================
 
-        this.scoreText = this.add.text(6, 85, '00:00,0', {
-            font: '30px Courier New',
-            fill: '#000',
-        });
+        this.scoreText = this.add
+            .text(6, height - 300, '00:00,0', {
+                font: '30px Courier New',
+                fill: '#000',
+            })
+            .setDepth(70);
 
-        this.recordText = this.add.text(320, 85, record, {
-            font: '10px Courier New',
-            fill: '#000',
-        });
+        this.recordText = this.add
+            .text(320, height - 300, record, {
+                font: '10px Courier New',
+                fill: '#000',
+            })
+            .setDepth(70);
 
         this.trigger = this.time.addEvent({
             callback: () => {
@@ -417,31 +414,31 @@ class Game extends Phaser.Scene {
             score = null;
             this.scene.start('Menu');
         }
-    }
 
-    update_player() {
         if (this.currentSpeed !== 0) {
             this.scoreText.setPosition(this.player.x - 30, 85);
             this.recordText.setPosition(this.player.x + 100, 85);
         }
+    }
 
-        if (this.cursors.right.isDown) {
+    update_player() {
+        if (this.cursors.right.isDown && this.player.body.onFloor()) {
             if (this.currentSpeed < this.maxSpeed) {
-                this.currentSpeed += 6;
+                this.currentSpeed += this.currentSpeed < 50 ? 0.5 : 2;
                 this.player.setVelocityX(this.currentSpeed);
             }
         }
 
         if (this.cursors.right.isUp) {
             if (this.currentSpeed > 0) {
-                this.currentSpeed -= 2;
+                this.currentSpeed -= 1;
                 this.player.setVelocityX(this.currentSpeed);
             } else {
                 this.currentSpeed = 0;
             }
         }
 
-        if (this.cursors.left.isDown) {
+        if (this.cursors.left.isDown && this.player.body.onFloor()) {
             if (this.currentSpeed !== 0) {
                 this.currentSpeed -= 4;
                 if (this.currentSpeed < 0) {
@@ -454,7 +451,7 @@ class Game extends Phaser.Scene {
             if (!this.jumping && this.player.body.onFloor()) {
                 this.jumping = true;
                 this.player.body.setVelocityY(
-                    this.currentSpeed > 600 ? -740 : -400
+                    this.currentSpeed > 500 ? -700 : -350
                 );
             }
         }
@@ -467,13 +464,13 @@ class Game extends Phaser.Scene {
 
         if (this.cursors.down.isDown) {
             this.player.body
-                .setSize(100, 140, false)
-                .setOffset(this.player.frame.x, this.player.frame.y + 60);
+                .setSize(50, 75, false)
+                .setOffset(this.player.frame.x, this.player.frame.y + 25);
         }
 
         if (this.cursors.down.isUp) {
             this.player.body
-                .setSize(100, 200, false)
+                .setSize(50, 100, false)
                 .setOffset(this.player.frame.x, this.player.frame.y);
         }
     }
@@ -497,12 +494,12 @@ const config = {
     height: window.innerHeight * window.devicePixelRatio,
     backgroundColor: '0xffffff',
     parent: 'game',
-    scene: [Menu, Game],
+    scene: [Game],
     physics: {
         default: 'arcade',
         arcade: {
             gravity: { y: 1000 },
-            debug: false,
+            debug: true,
         },
     },
 };
