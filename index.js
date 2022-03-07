@@ -21,10 +21,10 @@ let score = null;
 
 function stage_create() {
     let stageTemp = '';
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < 20; i++) {
         const number = Phaser.Math.Between(1, 6);
         stageTemp = stageTemp + '' + number;
-        const zeros = Phaser.Math.Between(0, 4);
+        const zeros = Phaser.Math.Between(0, 3);
         for (z = 0; z < zeros; z++) stageTemp = stageTemp + '0';
     }
     window.localStorage.setItem('stage', stageTemp);
@@ -160,7 +160,7 @@ class Menu extends Phaser.Scene {
 class Game extends Phaser.Scene {
     constructor() {
         super('Game');
-        this.maxSpeed = 2600;
+        this.maxSpeed = 2000;
         this.currentSpeed = 0;
         this.jumping = false;
         this.allTime = 0;
@@ -196,40 +196,40 @@ class Game extends Phaser.Scene {
         // finish ==============================================================
 
         this.load.spritesheet('finish', 'assets/finish.png', {
-            frameWidth: 400,
-            frameHeight: 400,
+            frameWidth: 300,
+            frameHeight: 300,
         });
 
         // obstacle ============================================================
 
-        this.load.spritesheet('1x1', 'assets/obstacle.png', {
+        this.load.spritesheet('50x50', 'assets/obstacle.png', {
+            frameWidth: 50,
+            frameHeight: 50,
+        });
+
+        this.load.spritesheet('100x100', 'assets/obstacle.png', {
             frameWidth: 100,
             frameHeight: 100,
         });
 
-        this.load.spritesheet('2x2', 'assets/obstacle.png', {
-            frameWidth: 200,
-            frameHeight: 200,
+        this.load.spritesheet('50x50_air', 'assets/obstacle.png', {
+            frameWidth: 50,
+            frameHeight: 50,
         });
 
-        this.load.spritesheet('1x1_air', 'assets/obstacle.png', {
+        this.load.spritesheet('100x100_air', 'assets/obstacle.png', {
             frameWidth: 100,
             frameHeight: 100,
         });
 
-        this.load.spritesheet('2x2_air', 'assets/obstacle.png', {
+        this.load.spritesheet('200x100', 'assets/obstacle.png', {
             frameWidth: 200,
-            frameHeight: 200,
+            frameHeight: 100,
         });
 
-        this.load.spritesheet('4x2', 'assets/obstacle.png', {
+        this.load.spritesheet('400x50', 'assets/obstacle.png', {
             frameWidth: 400,
-            frameHeight: 200,
-        });
-
-        this.load.spritesheet('6x1', 'assets/obstacle.png', {
-            frameWidth: 600,
-            frameHeight: 100,
+            frameHeight: 50,
         });
     }
 
@@ -242,7 +242,7 @@ class Game extends Phaser.Scene {
         // player ==============================================================
 
         const playerX = width / 3;
-        this.player = this.physics.add.sprite(playerX, height - 300, 'player');
+        this.player = this.physics.add.sprite(playerX, height - 100, 'player');
         this.cameras.main.startFollow(this.player, false, 1, 1, playerX * -1);
         this.player.setCollideWorldBounds(true).setDepth(30);
 
@@ -264,7 +264,7 @@ class Game extends Phaser.Scene {
         // obstacle ============================================================
 
         const obstacle = this.physics.add.staticGroup();
-        let obstacleX = 4000;
+        let obstacleX = 2200;
         let countZeros = 0;
         for (let i = 0; i < stage.length; i++) {
             const number = Number(stage[i]);
@@ -274,52 +274,52 @@ class Game extends Phaser.Scene {
             let obs = '';
 
             if (number === 1) {
-                x = 50 + 500;
-                y = 150;
-                obs = '1x1';
+                x = 25;
+                y = 75;
+                obs = '50x50';
             }
 
             if (number === 2) {
-                x = 100 + 500;
-                y = 200;
-                obs = '2x2';
+                x = 50;
+                y = 100;
+                obs = '100x100';
             }
 
             if (number === 3) {
-                x = 50 + 500;
-                y = 300;
-                obs = '1x1_air';
+                x = 25;
+                y = 150;
+                obs = '50x50_air';
             }
 
             if (number === 4) {
-                x = 100 + 500;
-                y = 350;
-                obs = '2x2_air';
+                x = 50;
+                y = 175;
+                obs = '100x100_air';
             }
 
             if (number === 5) {
-                x = 200 + 500;
-                y = 200;
-                obs = '4x2';
+                x = 100;
+                y = 100;
+                obs = '200x100';
             }
 
             if (number === 6) {
-                x = 300 + 500;
-                y = 150;
-                obs = '6x1';
+                x = 200;
+                y = 75;
+                obs = '400x50';
             }
 
             if (number !== 0 && obs !== '') {
                 countZeros = 0;
-                obstacleX += x;
+                obstacleX += x + 250;
                 const current = obstacle.create(obstacleX, height - y, obs);
                 current.body.updateFromGameObject();
-                obstacleX += x;
+                obstacleX += x + 250;
             }
 
-            if (number === 0 && countZeros < 4) {
+            if (number === 0 && countZeros < 3) {
                 countZeros += 1;
-                obstacleX += 1000;
+                obstacleX += 250;
             }
         }
 
@@ -333,7 +333,7 @@ class Game extends Phaser.Scene {
 
         const finish = this.physics.add.staticSprite(
             obstacleX + 1000,
-            height - 300,
+            height - 200,
             'finish'
         );
         finish.setDepth(20);
@@ -424,21 +424,22 @@ class Game extends Phaser.Scene {
     update_player() {
         if (this.cursors.right.isDown && this.player.body.onFloor()) {
             if (this.currentSpeed < this.maxSpeed) {
-                this.currentSpeed += this.currentSpeed < 50 ? 0.5 : 2;
+                this.currentSpeed += this.currentSpeed < 50 ? 0.5 : 1;
                 this.player.setVelocityX(this.currentSpeed);
             }
         }
 
         if (this.cursors.right.isUp) {
             if (this.currentSpeed > 0) {
-                this.currentSpeed -= 1;
+                this.currentSpeed -= 0.5;
                 this.player.setVelocityX(this.currentSpeed);
             } else {
                 this.currentSpeed = 0;
             }
         }
 
-        if (this.cursors.left.isDown && this.player.body.onFloor()) {
+        // if (this.cursors.left.isDown && this.player.body.onFloor()) {
+        if (this.cursors.left.isDown) {
             if (this.currentSpeed !== 0) {
                 this.currentSpeed -= 4;
                 if (this.currentSpeed < 0) {
@@ -451,7 +452,7 @@ class Game extends Phaser.Scene {
             if (!this.jumping && this.player.body.onFloor()) {
                 this.jumping = true;
                 this.player.body.setVelocityY(
-                    this.currentSpeed > 500 ? -700 : -350
+                    this.currentSpeed > 300 ? -525 : -425
                 );
             }
         }
@@ -464,8 +465,8 @@ class Game extends Phaser.Scene {
 
         if (this.cursors.down.isDown) {
             this.player.body
-                .setSize(50, 75, false)
-                .setOffset(this.player.frame.x, this.player.frame.y + 25);
+                .setSize(50, 70, false)
+                .setOffset(this.player.frame.x, this.player.frame.y + 30);
         }
 
         if (this.cursors.down.isUp) {
@@ -494,12 +495,12 @@ const config = {
     height: window.innerHeight * window.devicePixelRatio,
     backgroundColor: '0xffffff',
     parent: 'game',
-    scene: [Game],
+    scene: [Menu, Game],
     physics: {
         default: 'arcade',
         arcade: {
             gravity: { y: 1000 },
-            debug: true,
+            debug: false,
         },
     },
 };
