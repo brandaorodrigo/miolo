@@ -33,6 +33,18 @@ function stage_create() {
     window.history.pushState(null, null, '/?o=' + stageTemp);
 }
 
+if (stage === '') {
+    stage_create();
+}
+
+function convert_time(time) {
+    const fix = new Date(time * 10);
+    const min = String(fix.getMinutes()).padStart(2, '0');
+    const sec = String(fix.getSeconds()).padStart(2, '0');
+    const mil = String(fix.getMilliseconds()).slice(0, 2).padStart(2, '0');
+    return min + ':' + sec + ',' + mil;
+}
+
 class Menu extends Phaser.Scene {
     constructor() {
         super('Menu');
@@ -44,14 +56,26 @@ class Menu extends Phaser.Scene {
         const { width, height } = this.sys.game.canvas;
         this.physics.world.setFPS(44);
 
+        if (record != null && String(record) === String(score)) {
+            this.recordText = this.add.text(
+                width / 2 - 300,
+                100,
+                'novo recorde!',
+                {
+                    font: '40px Courier New',
+                    fill: '#000',
+                }
+            );
+        }
+
         if (score !== null) {
             this.scoreText = this.add.text(
                 width / 2 - 300,
-                100,
-                'SEU TEMPO FOI ' + score,
+                200,
+                'seu tempo foi ' + convert_time(score),
                 {
-                    font: '40px Courier New',
-                    fill: '#a86',
+                    font: '10px Courier New',
+                    fill: '#000',
                 }
             );
         }
@@ -59,55 +83,39 @@ class Menu extends Phaser.Scene {
         if (record != null) {
             this.recordText = this.add.text(
                 width / 2 - 300,
-                200,
-                'SEU RECORDE ATUAL É ' + record,
+                250,
+                'seu recorde atual é ' + convert_time(record),
                 {
-                    font: '30px Courier New',
+                    font: '10px Courier New',
                     fill: '#000',
                 }
             );
-        }
-
-        if (record === score) {
-            this.recordText = this.add.text(
-                width / 2 - 300,
-                200,
-                'NOVO RECORDE!',
-                {
-                    font: '70px Courier New',
-                    fill: '#000',
-                }
-            );
-        }
-
-        if (record != null) {
-            this.shareText = this.add.text(
-                width / 2 - 300,
-                300,
-                'APERTE S PARA COMPARTILHAR ESTE ESTÁGIO E DESAFIAR UM AMIGO',
-                {
-                    font: '30px Courier New',
-                    fill: '#f0f',
-                }
-            );
-
             this.startText = this.add.text(
                 width / 2 - 300,
-                400,
-                'APERTE ENTER PARA TENTAR DE NOVO',
+                300,
+                '( ENTER ) tentar de novo',
                 {
-                    font: '30px Courier New',
-                    fill: '#0f0',
+                    font: '20px Courier New',
+                    fill: '#888',
+                }
+            );
+            this.shareText = this.add.text(
+                width / 2 - 300,
+                350,
+                '( S ) compartilhar percurso',
+                {
+                    font: '20px Courier New',
+                    fill: '#888',
                 }
             );
         } else {
             this.startText = this.add.text(
                 width / 2 - 300,
-                300,
-                'APERTE ENTER PARA JOGAR',
+                350,
+                '( ENTER ) começar',
                 {
-                    font: '30px Courier New',
-                    fill: '#0f0',
+                    font: '20px Courier New',
+                    fill: '#888',
                 }
             );
         }
@@ -115,10 +123,10 @@ class Menu extends Phaser.Scene {
         this.createText = this.add.text(
             width / 2 - 300,
             500,
-            'APERTE C PARA GERAR UM NOVO ESTÁGIO',
+            '( C ) gerar novo percurso',
             {
                 font: '30px Courier New',
-                fill: '#00f',
+                fill: '#888',
             }
         );
 
@@ -133,9 +141,9 @@ class Menu extends Phaser.Scene {
 
     update() {
         if (this.cursors.start.isDown) {
-            this.startText.setText('PREPASE-SE...');
+            this.startText.setText('prepare-se . . .');
             this.time.addEvent({
-                delay: 2000,
+                delay: 1000,
                 loop: false,
                 callback: () => {
                     this.scene.start('Game');
@@ -144,10 +152,13 @@ class Menu extends Phaser.Scene {
         }
 
         if (this.cursors.generate.isDown) {
-            this.startText.setText('GERANDO NOVO ESTÁGIO...');
+            this.startText.setText('gerando novo percurso . . .');
+            this.recordText.setText('');
             stage_create();
+            record = null;
+            score = null;
             this.time.addEvent({
-                delay: 2000,
+                delay: 1000,
                 loop: false,
                 callback: () => {
                     this.scene.restart();
@@ -339,7 +350,7 @@ class Game extends Phaser.Scene {
         finish.setDepth(20);
         this.physics.add.collider(finish, this.player, () => {
             score = this.allTime;
-            if (Number(score) < Number(record)) {
+            if (record === null || Number(score) < Number(record)) {
                 record = score;
                 window.localStorage.setItem(stage, String(score));
             }
@@ -386,14 +397,9 @@ class Game extends Phaser.Scene {
             callback: () => {
                 if (this.currentSpeed > 0) {
                     this.allTime += 1;
-                    const fix_allTime = new Date(this.allTime * 10);
-                    this.scoreText.setText(
-                        fix_allTime.getMinutes() +
-                            ':' +
-                            fix_allTime.getSeconds() +
-                            ',' +
-                            String(fix_allTime.getMilliseconds())
-                    );
+                    const t = convert_time(this.allTime);
+                    console.log(t);
+                    this.scoreText.setText(convert_time(this.allTime));
                 }
             },
             callbackScope: this,
@@ -438,9 +444,10 @@ class Game extends Phaser.Scene {
             }
         }
 
-        if (this.cursors.left.isDown && this.player.body.onFloor()) {
+        //if (this.cursors.left.isDown && this.player.body.onFloor()) {
+        if (this.cursors.left.isDown) {
             if (this.currentSpeed !== 0) {
-                this.currentSpeed -= 4;
+                this.currentSpeed -= 2;
                 if (this.currentSpeed < 0) {
                     this.currentSpeed = 0;
                 }
@@ -492,7 +499,7 @@ const config = {
     },
     width: window.innerWidth * window.devicePixelRatio,
     height: window.innerHeight * window.devicePixelRatio,
-    backgroundColor: '0xffffff',
+    backgroundColor: '0xdcdcdc',
     parent: 'game',
     scene: [Menu, Game],
     physics: {
