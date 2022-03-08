@@ -1,3 +1,18 @@
+/*
+
+TODO:
+
+- gamepad ou teclado ou touch
+- salvar ranking passado do desafiador junto do share mas encryptado
+- base64 no cenario e ranking vencedor?
+- so fazer os objetos andarem quando o personagem começa a correr ( para o tempo começar a contar)
+- gerar novo cenário tem de abrir /miolo automatica
+- criar ferramenta de compartilhamento
+- aprender adicionar sprites animados
+- aprender adicionar sons
+- colocar cenário de fundo e de frente alem do ceu
+*/
+
 // stage by url ================================================================
 
 const urlParams = new URLSearchParams(window.location.search);
