@@ -74,7 +74,7 @@ class Menu extends Phaser.Scene {
                 200,
                 'seu tempo foi ' + convert_time(score),
                 {
-                    font: '10px Courier New',
+                    font: '15px Courier New',
                     fill: '#000',
                 }
             );
@@ -86,7 +86,7 @@ class Menu extends Phaser.Scene {
                 250,
                 'seu recorde atual é ' + convert_time(record),
                 {
-                    font: '10px Courier New',
+                    font: '15px Courier New',
                     fill: '#000',
                 }
             );
@@ -175,7 +175,6 @@ class Game extends Phaser.Scene {
         this.currentSpeed = 0;
         this.jumping = false;
         this.allTime = 0;
-        this.timer = new Phaser.Time.TimerEvent();
     }
 
     preload() {
@@ -238,8 +237,8 @@ class Game extends Phaser.Scene {
             frameHeight: 100,
         });
 
-        this.load.spritesheet('400x50', 'assets/obstacle.png', {
-            frameWidth: 400,
+        this.load.spritesheet('100x50_run', 'assets/obstacle.png', {
+            frameWidth: 100,
             frameHeight: 50,
         });
     }
@@ -282,49 +281,73 @@ class Game extends Phaser.Scene {
 
             let x = 0;
             let y = 0;
+            let speed = 0;
             let obs = '';
 
             if (number === 1) {
                 x = 25;
                 y = 75;
                 obs = '50x50';
+                speed = 0;
             }
 
             if (number === 2) {
                 x = 50;
                 y = 100;
                 obs = '100x100';
+                speed = 0;
             }
 
             if (number === 3) {
                 x = 25;
                 y = 150;
                 obs = '50x50_air';
+                speed = 0;
             }
 
             if (number === 4) {
                 x = 50;
                 y = 175;
                 obs = '100x100_air';
+                speed = 0;
             }
 
             if (number === 5) {
                 x = 100;
                 y = 100;
                 obs = '200x100';
+                speed = 0;
             }
 
             if (number === 6) {
-                x = 200;
+                x = 50;
                 y = 75;
-                obs = '400x50';
+                obs = '100x50_run';
+                speed = -250;
             }
 
             if (number !== 0 && obs !== '') {
                 countZeros = 0;
                 obstacleX += x + 250;
+
+                /*
                 const current = obstacle.create(obstacleX, height - y, obs);
                 current.body.updateFromGameObject();
+                */
+
+                const current = this.physics.add
+                    .sprite(obstacleX, height - y, obs)
+                    .setDepth(20)
+                    .setVelocityX(speed);
+
+                current.setCollideWorldBounds(true).setDepth(20);
+
+                this.physics.add.collider(current, ground);
+
+                this.physics.add.collider(current, this.player, () => {
+                    this.update_reset();
+                });
+
                 obstacleX += x + 250;
             }
 
@@ -334,9 +357,17 @@ class Game extends Phaser.Scene {
             }
         }
 
+        /*
         this.physics.add.collider(obstacle, this.player, () => {
+            //this.time.addEvent({
+            //    delay: 200,
+            //    loop: false,
+            //    callback: () => {
             this.update_reset();
+            //    },
+            //});
         });
+        */
 
         obstacle.setDepth(20);
 
@@ -380,25 +411,25 @@ class Game extends Phaser.Scene {
         // text ================================================================
 
         this.scoreText = this.add
-            .text(6, height - 300, '00:00,0', {
-                font: '30px Courier New',
-                fill: '#000',
+            .text(40, 40, '00:00,0', {
+                font: '28px Courier New',
+                fill: '#555',
             })
-            .setDepth(70);
+            .setDepth(70)
+            .setScrollFactor(0);
 
         this.recordText = this.add
-            .text(320, height - 300, record, {
-                font: '10px Courier New',
-                fill: '#000',
+            .text(40, 70, convert_time(record), {
+                font: '13px Courier New',
+                fill: '#aaa',
             })
-            .setDepth(70);
+            .setDepth(70)
+            .setScrollFactor(0);
 
         this.trigger = this.time.addEvent({
             callback: () => {
                 if (this.currentSpeed > 0) {
                     this.allTime += 1;
-                    const t = convert_time(this.allTime);
-                    console.log(t);
                     this.scoreText.setText(convert_time(this.allTime));
                 }
             },
@@ -420,11 +451,6 @@ class Game extends Phaser.Scene {
             score = null;
             this.scene.start('Menu');
         }
-
-        if (this.currentSpeed !== 0) {
-            this.scoreText.setPosition(this.player.x - 30, 85);
-            this.recordText.setPosition(this.player.x + 100, 85);
-        }
     }
 
     update_player() {
@@ -435,7 +461,8 @@ class Game extends Phaser.Scene {
             }
         }
 
-        if (this.cursors.right.isUp && this.player.body.onFloor()) {
+        //if (this.cursors.right.isUp && this.player.body.onFloor()) {
+        if (this.cursors.right.isUp) {
             if (this.currentSpeed > 0) {
                 this.currentSpeed -= 0.5;
                 this.player.setVelocityX(this.currentSpeed);
