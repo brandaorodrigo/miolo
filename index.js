@@ -289,7 +289,7 @@ class Game extends Phaser.Scene {
         // obstacle ============================================================
 
         const obstacle = this.physics.add.staticGroup();
-        let obstacleX = 2200;
+        let obstacleX = 2500;
         let countZeros = 0;
         for (let i = 0; i < stage.length; i++) {
             const number = Number(stage[i]);
@@ -300,35 +300,35 @@ class Game extends Phaser.Scene {
             let obs = '';
 
             if (number === 1) {
-                x = 25;
+                x = 25 + 250;
                 y = 75;
                 obs = '50x50';
                 speed = 0;
             }
 
             if (number === 2) {
-                x = 50;
+                x = 50 + 250;
                 y = 100;
                 obs = '100x100';
                 speed = 0;
             }
 
             if (number === 3) {
-                x = 25;
+                x = 25 + 250;
                 y = 150;
                 obs = '50x50_air';
                 speed = 0;
             }
 
             if (number === 4) {
-                x = 50;
+                x = 50 + 250;
                 y = 175;
                 obs = '100x100_air';
                 speed = 0;
             }
 
             if (number === 5) {
-                x = 100;
+                x = 100 + 250;
                 y = 100;
                 obs = '200x100';
                 speed = 0;
@@ -343,7 +343,7 @@ class Game extends Phaser.Scene {
 
             if (number !== 0 && obs !== '') {
                 countZeros = 0;
-                obstacleX += x + 250;
+                obstacleX += x;
 
                 /*
                 const current = obstacle.create(obstacleX, height - y, obs);
@@ -363,7 +363,7 @@ class Game extends Phaser.Scene {
                     this.update_reset();
                 });
 
-                obstacleX += x + 250;
+                obstacleX += x;
             }
 
             if (number === 0 && countZeros < 3) {
@@ -389,7 +389,7 @@ class Game extends Phaser.Scene {
         // finish ==============================================================
 
         const finish = this.physics.add.staticSprite(
-            obstacleX + 1000,
+            obstacleX + 1500,
             height - 200,
             'finish'
         );
@@ -452,16 +452,42 @@ class Game extends Phaser.Scene {
             delay: 10,
             loop: true,
         });
+
+        // gamepad =============================================================
+
+        if (this.input.gamepad.total === 0) {
+            console.log('Press any button on a connected Gamepad');
+        }
+
+        this.input.gamepad.once(
+            'connected',
+            function (pad) {
+                console.log('connected', pad.id);
+            },
+            this
+        );
     }
 
     update() {
+        var pads = this.input.gamepad.gamepads;
+
+        this.gamepad = null;
+        for (var i = 0; i < pads.length; i++) {
+            this.gamepad = pads[i];
+            if (!this.gamepad) {
+                continue;
+            }
+        }
+
         this.update_player();
 
-        if (this.cursors.replay.isDown) {
+        this.update_player_gamepad();
+
+        if (this.cursors.replay.isDown || this.gamepad?.buttonY) {
             this.update_reset();
         }
 
-        if (this.cursors.exit.isDown) {
+        if (this.cursors.exit.isDown || this.gamepad?.start) {
             this.update_reset();
             score = null;
             this.scene.start('Menu');
@@ -469,7 +495,10 @@ class Game extends Phaser.Scene {
     }
 
     update_player() {
-        if (this.cursors.right.isDown && this.player.body.onFloor()) {
+        if (
+            (this.cursors.right.isDown || this.gamepad?.right === true) &&
+            this.player.body.onFloor()
+        ) {
             if (this.currentSpeed < this.maxSpeed) {
                 this.currentSpeed += this.currentSpeed < 50 ? 0.5 : 1;
                 this.player.setVelocityX(this.currentSpeed);
@@ -477,7 +506,7 @@ class Game extends Phaser.Scene {
         }
 
         //if (this.cursors.right.isUp && this.player.body.onFloor()) {
-        if (this.cursors.right.isUp) {
+        if (this.cursors.right.isUp || this.gamepad?.right === false) {
             if (this.currentSpeed > 0) {
                 this.currentSpeed -= 0.5;
                 this.player.setVelocityX(this.currentSpeed);
@@ -487,7 +516,7 @@ class Game extends Phaser.Scene {
         }
 
         //if (this.cursors.left.isDown && this.player.body.onFloor()) {
-        if (this.cursors.left.isDown) {
+        if (this.cursors.left.isDown || this.gamepad?.left === true) {
             if (this.currentSpeed !== 0) {
                 this.currentSpeed -= 2;
                 if (this.currentSpeed < 0) {
@@ -496,7 +525,7 @@ class Game extends Phaser.Scene {
             }
         }
 
-        if (this.cursors.jump.isDown) {
+        if (this.cursors.jump.isDown || this.gamepad?.buttonA === true) {
             if (!this.jumping && this.player.body.onFloor()) {
                 this.jumping = true;
                 this.player.body.setVelocityY(
@@ -505,19 +534,75 @@ class Game extends Phaser.Scene {
             }
         }
 
-        if (this.cursors.jump.isUp) {
+        if (this.cursors.jump.isUp || this.gamepad?.buttonA === false) {
             if (this.jumping && this.player.body.onFloor()) {
                 this.jumping = false;
             }
         }
 
-        if (this.cursors.down.isDown) {
+        if (this.cursors.down.isDown || this.gamepad?.down === true) {
             this.player.body
                 .setSize(50, 70, false)
                 .setOffset(this.player.frame.x, this.player.frame.y + 30);
         }
 
-        if (this.cursors.down.isUp) {
+        if (this.cursors.down.isUp || this.gamepad?.down === false) {
+            this.player.body
+                .setSize(50, 100, false)
+                .setOffset(this.player.frame.x, this.player.frame.y);
+        }
+    }
+
+    update_player_gamepad() {
+        if (this.gamepad?.right === true && this.player.body.onFloor()) {
+            if (this.currentSpeed < this.maxSpeed) {
+                this.currentSpeed += this.currentSpeed < 50 ? 0.3 : 1;
+                this.player.setVelocityX(this.currentSpeed);
+            }
+        }
+
+        //if (this.cursors.right.isUp && this.player.body.onFloor()) {
+        if (this.gamepad?.right === false) {
+            if (this.currentSpeed > 0) {
+                this.currentSpeed -= 0.3;
+                this.player.setVelocityX(this.currentSpeed);
+            } else {
+                this.currentSpeed = 0;
+            }
+        }
+
+        //if (this.cursors.left.isDown && this.player.body.onFloor()) {
+        if (this.gamepad?.left === true) {
+            if (this.currentSpeed !== 0) {
+                this.currentSpeed -= 1;
+                if (this.currentSpeed < 0) {
+                    this.currentSpeed = 0;
+                }
+            }
+        }
+
+        if (this.gamepad?.buttons[0]?.pressed === true) {
+            if (!this.jumping && this.player.body.onFloor()) {
+                this.jumping = true;
+                this.player.body.setVelocityY(
+                    this.currentSpeed > 300 ? -525 : -425
+                );
+            }
+        }
+
+        if (this.gamepad?.up === false) {
+            if (this.jumping && this.player.body.onFloor()) {
+                this.jumping = false;
+            }
+        }
+
+        if (this.gamepad?.down === true) {
+            this.player.body
+                .setSize(50, 70, false)
+                .setOffset(this.player.frame.x, this.player.frame.y + 30);
+        }
+
+        if (this.gamepad?.down === false) {
             this.player.body
                 .setSize(50, 100, false)
                 .setOffset(this.player.frame.x, this.player.frame.y);
@@ -544,6 +629,9 @@ const config = {
     backgroundColor: '0xdcdcdc',
     parent: 'game',
     scene: [Menu, Game],
+    input: {
+        gamepad: true,
+    },
     physics: {
         default: 'arcade',
         arcade: {
