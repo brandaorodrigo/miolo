@@ -4,13 +4,11 @@
 
 TODO:
 
-- gamepad ou teclado ou touch
 - salvar ranking passado do desafiador junto do share mas encryptado
 - base64 no cenario e ranking vencedor?
 - so fazer os objetos andarem quando o personagem começa a correr ( para o tempo começar a contar)
 - gerar novo cenário tem de abrir /miolo automatica
 - criar ferramenta de compartilhamento
-- aprender adicionar sprites animados
 - aprender adicionar sons
 - colocar cenário de fundo e de frente alem do ceu
 */
@@ -38,7 +36,7 @@ let score = null;
 
 function stage_create() {
     let stageTemp = '';
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 30; i++) {
         const number = Phaser.Math.Between(1, 6);
         stageTemp = stageTemp + '' + number;
         const zeros = Phaser.Math.Between(0, 3);
@@ -47,7 +45,7 @@ function stage_create() {
     window.localStorage.setItem('stage', stageTemp);
     stage = stageTemp;
     record = window.localStorage.getItem(stageTemp);
-    window.history.pushState(null, null, '/?o=' + stageTemp);
+    window.history.pushState(null, null, '/miolo?o=' + stageTemp);
 }
 
 if (stage === '') {
@@ -115,13 +113,13 @@ const keyboard_find = (__this) => {
 
 const keyboard = (keyboard, button) => {
     if (keyboard) {
-        if (keyboard.a.isDown && button == 'a') return true;
-        if (keyboard.c.isDown && button == 'c') return true;
-        if (keyboard.d.isDown && button == 'd') return true;
-        if (keyboard.enter.isDown && button == 'enter') return true;
-        if (keyboard.esc.isDown && button == 'esc') return true;
-        if (keyboard.s.isDown && button == 's') return true;
-        if (keyboard.w.isDown && button == 'w') return true;
+        if (keyboard.a.isDown && button === 'a') return true;
+        if (keyboard.c.isDown && button === 'c') return true;
+        if (keyboard.d.isDown && button === 'd') return true;
+        if (keyboard.enter.isDown && button === 'enter') return true;
+        if (keyboard.esc.isDown && button === 'esc') return true;
+        if (keyboard.s.isDown && button === 's') return true;
+        if (keyboard.w.isDown && button === 'w') return true;
     }
     return false;
 };
@@ -204,7 +202,7 @@ class Menu extends Phaser.Scene {
             this.startText = this.add.text(
                 this.width / 2 - 300,
                 300,
-                '( ENTER / START ) tentar de novo',
+                '[ENTER] / (START) tentar de novo',
                 {
                     font: '20px Courier New',
                     fill: '#888',
@@ -213,7 +211,7 @@ class Menu extends Phaser.Scene {
             this.shareText = this.add.text(
                 this.width / 2 - 300,
                 350,
-                '( S / SELECT ) compartilhar percurso',
+                '[S] / (SELECT) compartilhar percurso',
                 {
                     font: '20px Courier New',
                     fill: '#888',
@@ -223,7 +221,7 @@ class Menu extends Phaser.Scene {
             this.startText = this.add.text(
                 this.width / 2 - 300,
                 350,
-                '( ENTER / START ) começar',
+                '[ENTER] / (START) começar',
                 {
                     font: '20px Courier New',
                     fill: '#888',
@@ -234,7 +232,7 @@ class Menu extends Phaser.Scene {
         this.createText = this.add.text(
             this.width / 2 - 300,
             500,
-            '( C / Y ) gerar novo percurso',
+            '[C] / (Y) gerar novo percurso',
             {
                 font: '30px Courier New',
                 fill: '#888',
@@ -279,7 +277,7 @@ class Menu extends Phaser.Scene {
 class Game extends Phaser.Scene {
     constructor() {
         super('Game');
-        this.maxSpeed = 2200;
+        this.maxSpeed = 2000;
         this.currentSpeed = 0;
         this.jumping = false;
         this.allTime = 0;
@@ -305,7 +303,7 @@ class Game extends Phaser.Scene {
 
         // player ==============================================================
 
-        this.load.spritesheet('player', 'assets/sk8r.png', {
+        this.load.spritesheet('player', 'assets/player.png', {
             frameWidth: 50,
             frameHeight: 100,
         });
@@ -357,8 +355,27 @@ class Game extends Phaser.Scene {
 
         // player ==============================================================
 
+        this.anims.create({
+            key: 'up',
+            frames: this.anims.generateFrameNumbers('player', {
+                frames: [0],
+            }),
+            frameRate: 1,
+            repeat: -1,
+        });
+
+        this.anims.create({
+            key: 'down',
+            frames: this.anims.generateFrameNumbers('player', {
+                frames: [1],
+            }),
+            frameRate: 1,
+            repeat: -1,
+        });
+
         const playerX = width / 3;
-        this.player = this.physics.add.sprite(playerX, height - 100, 'player');
+        //this.player = this.physics.add.sprite(playerX, height - 100, 'player');
+        this.player = this.physics.add.sprite(playerX, height - 100);
         this.cameras.main.startFollow(this.player, false, 1, 1, playerX * -1);
         this.player.setCollideWorldBounds(true).setDepth(30);
 
@@ -379,7 +396,6 @@ class Game extends Phaser.Scene {
 
         // obstacle ============================================================
 
-        const obstacle = this.physics.add.staticGroup();
         let obstacleX = 2500;
         let countZeros = 0;
         for (let i = 0; i < stage.length; i++) {
@@ -432,50 +448,38 @@ class Game extends Phaser.Scene {
                 speed = -250;
             }
 
-            if (number !== 0 && obs !== '') {
-                countZeros = 0;
-                obstacleX += x;
-
-                /*
-                const current = obstacle.create(obstacleX, height - y, obs);
-                current.body.updateFromGameObject();
-                */
-
-                const current = this.physics.add
-                    .sprite(obstacleX, height - y, obs)
-                    .setDepth(20)
-                    .setVelocityX(speed);
-
-                current.setCollideWorldBounds(true).setDepth(20);
-
-                this.physics.add.collider(current, ground);
-
-                this.physics.add.collider(current, this.player, () => {
-                    this.update_reset();
-                });
-
-                obstacleX += x;
-            }
-
             if (number === 0 && countZeros < 3) {
                 countZeros += 1;
                 obstacleX += 250;
             }
+
+            if (number > 0 && number < 5 && obs !== '') {
+                countZeros = 0;
+                obstacleX += x;
+                const current = this.physics.add
+                    .staticSprite(obstacleX, height - y, obs)
+                    .setDepth(20);
+                this.physics.add.collider(current, this.player, () => {
+                    this.update_reset();
+                });
+                obstacleX += x;
+            }
+
+            if (number > 5 && obs !== '') {
+                countZeros = 0;
+                obstacleX += x;
+                const current = this.physics.add
+                    .sprite(obstacleX, height - y, obs)
+                    .setDepth(20)
+                    .setVelocityX(speed);
+                current.setCollideWorldBounds(true).setDepth(20);
+                this.physics.add.collider(current, ground);
+                this.physics.add.collider(current, this.player, () => {
+                    this.update_reset();
+                });
+                obstacleX += x;
+            }
         }
-
-        /*
-        this.physics.add.collider(obstacle, this.player, () => {
-            //this.time.addEvent({
-            //    delay: 200,
-            //    loop: false,
-            //    callback: () => {
-            this.update_reset();
-            //    },
-            //});
-        });
-        */
-
-        obstacle.setDepth(20);
 
         // finish ==============================================================
 
@@ -521,7 +525,7 @@ class Game extends Phaser.Scene {
             .setDepth(70)
             .setScrollFactor(0);
 
-        this.trigger = this.time.addEvent({
+        this.time.addEvent({
             callback: () => {
                 if (this.currentSpeed > 0) {
                     this.allTime += 1;
@@ -590,7 +594,7 @@ class Game extends Phaser.Scene {
             if (!this.jumping && this.player.body.onFloor()) {
                 this.jumping = true;
                 this.player.body.setVelocityY(
-                    this.currentSpeed > 300 ? -525 : -425
+                    this.currentSpeed > 300 ? -528 : -428
                 );
             }
         }
@@ -605,12 +609,14 @@ class Game extends Phaser.Scene {
             this.player.body
                 .setSize(50, 70, false)
                 .setOffset(this.player.frame.x, this.player.frame.y + 30);
+            this.player.play('down');
         }
 
         if (!keyboard(this.keyboard, 's') && !gamepad(this.gamepad, 'down')) {
             this.player.body
                 .setSize(50, 100, false)
                 .setOffset(this.player.frame.x, this.player.frame.y);
+            this.player.play('up');
         }
 
         this.player.setVelocityX(this.currentSpeed);
