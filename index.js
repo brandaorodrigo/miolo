@@ -1,3 +1,5 @@
+// import Phaser from 'phaser';
+
 /*
 
 TODO:
@@ -60,20 +62,114 @@ function convert_time(time) {
     return min + ':' + sec + ',' + mil;
 }
 
+const gamepad_find = (__this) => {
+    let found = false;
+    if (__this.input.gamepad.total !== 0) {
+        const pads = __this.input.gamepad.gamepads;
+        for (let i = 0; i < pads.length; i++) {
+            if (pads[i]) {
+                found = pads[i];
+                console.log(found);
+                break;
+            }
+        }
+    }
+    return found;
+};
+
+const gamepad = (gamepad, button) => {
+    if (gamepad) {
+        const buttons = gamepad.buttons;
+        if (buttons[0]?.pressed && button === 'a') return true;
+        if (buttons[1]?.pressed && button === 'b') return true;
+        if (buttons[2]?.pressed && button === 'x') return true;
+        if (buttons[3]?.pressed && button === 'y') return true;
+        if (buttons[4]?.pressed && button === 'l1') return true;
+        if (buttons[5]?.pressed && button === 'r1') return true;
+        if (buttons[6]?.pressed && button === 'l2') return true;
+        if (buttons[7]?.pressed && button === 'r2') return true;
+        if (buttons[8]?.pressed && button === 'select') return true;
+        if (buttons[9]?.pressed && button === 'start') return true;
+        if (buttons[10]?.pressed && button === 'l3') return true;
+        if (buttons[11]?.pressed && button === 'r3') return true;
+        if (gamepad.left && button === 'left') return true;
+        if (gamepad.left && button === 'left') return true;
+        if (gamepad.right && button === 'right') return true;
+        if (gamepad.up && button === 'up') return true;
+        if (gamepad.down && button === 'down') return true;
+    }
+    return false;
+};
+
+const keyboard_find = (__this) => {
+    return __this.input.keyboard.addKeys({
+        a: Phaser.Input.Keyboard.KeyCodes.A,
+        c: Phaser.Input.Keyboard.KeyCodes.C,
+        d: Phaser.Input.Keyboard.KeyCodes.D,
+        enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+        esc: Phaser.Input.Keyboard.KeyCodes.ESC,
+        s: Phaser.Input.Keyboard.KeyCodes.S,
+        w: Phaser.Input.Keyboard.KeyCodes.W,
+    });
+};
+
+const keyboard = (keyboard, button) => {
+    if (keyboard) {
+        if (keyboard.a.isDown && button == 'a') return true;
+        if (keyboard.c.isDown && button == 'c') return true;
+        if (keyboard.d.isDown && button == 'd') return true;
+        if (keyboard.enter.isDown && button == 'enter') return true;
+        if (keyboard.esc.isDown && button == 'esc') return true;
+        if (keyboard.s.isDown && button == 's') return true;
+        if (keyboard.w.isDown && button == 'w') return true;
+    }
+    return false;
+};
+
+class Example extends Phaser.Scene {
+    constructor() {
+        super('Example');
+    }
+
+    preload() {}
+
+    create() {
+        this.width = this.sys.game.canvas.width;
+        this.height = this.sys.game.canvas.heigh;
+        this.keyboard = keyboard_find(this);
+    }
+
+    update() {
+        if (!this.gamepad) this.gamepad = gamepad_find(this);
+
+        if (
+            gamepad(this.gamepad, 'start') ||
+            keyboard(this.keyboard, 'enter')
+        ) {
+            this.time.addEvent({
+                delay: 1000,
+                loop: false,
+                callback: () => {
+                    this.scene.start('Menu');
+                },
+            });
+        }
+    }
+}
+
 class Menu extends Phaser.Scene {
     constructor() {
         super('Menu');
     }
 
     create() {
-        // config ==============================================================
-
-        const { width, height } = this.sys.game.canvas;
-        this.physics.world.setFPS(44);
+        this.width = this.sys.game.canvas.width;
+        this.height = this.sys.game.canvas.heigh;
+        this.keyboard = keyboard_find(this);
 
         if (record != null && String(record) === String(score)) {
             this.recordText = this.add.text(
-                width / 2 - 300,
+                this.width / 2 - 300,
                 100,
                 'novo recorde!',
                 {
@@ -85,7 +181,7 @@ class Menu extends Phaser.Scene {
 
         if (score !== null) {
             this.scoreText = this.add.text(
-                width / 2 - 300,
+                this.width / 2 - 300,
                 200,
                 'seu tempo foi ' + convert_time(score),
                 {
@@ -97,7 +193,7 @@ class Menu extends Phaser.Scene {
 
         if (record != null) {
             this.recordText = this.add.text(
-                width / 2 - 300,
+                this.width / 2 - 300,
                 250,
                 'seu recorde atual é ' + convert_time(record),
                 {
@@ -106,18 +202,18 @@ class Menu extends Phaser.Scene {
                 }
             );
             this.startText = this.add.text(
-                width / 2 - 300,
+                this.width / 2 - 300,
                 300,
-                '( ENTER ) tentar de novo',
+                '( ENTER / START ) tentar de novo',
                 {
                     font: '20px Courier New',
                     fill: '#888',
                 }
             );
             this.shareText = this.add.text(
-                width / 2 - 300,
+                this.width / 2 - 300,
                 350,
-                '( S ) compartilhar percurso',
+                '( S / SELECT ) compartilhar percurso',
                 {
                     font: '20px Courier New',
                     fill: '#888',
@@ -125,9 +221,9 @@ class Menu extends Phaser.Scene {
             );
         } else {
             this.startText = this.add.text(
-                width / 2 - 300,
+                this.width / 2 - 300,
                 350,
-                '( ENTER ) começar',
+                '( ENTER / START ) começar',
                 {
                     font: '20px Courier New',
                     fill: '#888',
@@ -136,27 +232,24 @@ class Menu extends Phaser.Scene {
         }
 
         this.createText = this.add.text(
-            width / 2 - 300,
+            this.width / 2 - 300,
             500,
-            '( C ) gerar novo percurso',
+            '( C / Y ) gerar novo percurso',
             {
                 font: '30px Courier New',
                 fill: '#888',
             }
         );
-
-        // cursor ==============================================================
-
-        this.cursors = this.input.keyboard.addKeys({
-            start: Phaser.Input.Keyboard.KeyCodes.ENTER,
-            generate: Phaser.Input.Keyboard.KeyCodes.C,
-            share: Phaser.Input.Keyboard.KeyCodes.S,
-        });
     }
 
     update() {
-        if (this.cursors.start.isDown) {
-            this.startText.setText('prepare-se . . .');
+        if (!this.gamepad) this.gamepad = gamepad_find(this);
+
+        if (
+            gamepad(this.gamepad, 'start') ||
+            keyboard(this.keyboard, 'enter')
+        ) {
+            this.startText?.setText('prepare-se . . .');
             this.time.addEvent({
                 delay: 1000,
                 loop: false,
@@ -166,9 +259,9 @@ class Menu extends Phaser.Scene {
             });
         }
 
-        if (this.cursors.generate.isDown) {
-            this.startText.setText('gerando novo percurso . . .');
-            this.recordText.setText('');
+        if (gamepad(this.gamepad, 'y') || keyboard(this.keyboard, 'r')) {
+            this.startText?.setText('gerando novo percurso . . .');
+            this.recordText?.setText('');
             stage_create();
             record = null;
             score = null;
@@ -196,7 +289,6 @@ class Game extends Phaser.Scene {
         // scenario ============================================================
 
         this.load.image('sky', 'assets/sky.png');
-        this.load.image('back', 'assets/back.png');
         this.load.image('tiles', 'assets/map.png');
         this.load.tilemapTiledJSON('map', 'assets/map.json');
         this.load.image('tiles2', 'assets/ground.png');
@@ -260,9 +352,8 @@ class Game extends Phaser.Scene {
 
     create() {
         // config ==============================================================
-
+        this.keyboard = keyboard_find(this);
         const { width, height } = this.sys.game.canvas;
-        this.physics.world.setFPS(44);
 
         // player ==============================================================
 
@@ -307,7 +398,7 @@ class Game extends Phaser.Scene {
             }
 
             if (number === 2) {
-                x = 50 + 250;
+                x = 50 + 350;
                 y = 100;
                 obs = '100x100';
                 speed = 0;
@@ -328,7 +419,7 @@ class Game extends Phaser.Scene {
             }
 
             if (number === 5) {
-                x = 100 + 250;
+                x = 100 + 350;
                 y = 100;
                 obs = '200x100';
                 speed = 0;
@@ -412,17 +503,6 @@ class Game extends Phaser.Scene {
             .setScrollFactor(0.05)
             .setDepth(10);
 
-        // cursors =============================================================
-
-        this.cursors = this.input.keyboard.addKeys({
-            down: Phaser.Input.Keyboard.KeyCodes.S,
-            left: Phaser.Input.Keyboard.KeyCodes.A,
-            right: Phaser.Input.Keyboard.KeyCodes.D,
-            jump: Phaser.Input.Keyboard.KeyCodes.W,
-            replay: Phaser.Input.Keyboard.KeyCodes.ENTER,
-            exit: Phaser.Input.Keyboard.KeyCodes.ESC,
-        });
-
         // text ================================================================
 
         this.scoreText = this.add
@@ -445,143 +525,68 @@ class Game extends Phaser.Scene {
             callback: () => {
                 if (this.currentSpeed > 0) {
                     this.allTime += 1;
-                    this.scoreText.setText(convert_time(this.allTime));
+                    this.scoreText?.setText(convert_time(this.allTime));
                 }
             },
             callbackScope: this,
             delay: 10,
             loop: true,
         });
-
-        // gamepad =============================================================
-
-        if (this.input.gamepad.total === 0) {
-            console.log('Press any button on a connected Gamepad');
-        }
-
-        this.input.gamepad.once(
-            'connected',
-            function (pad) {
-                console.log('connected', pad.id);
-            },
-            this
-        );
     }
 
     update() {
-        var pads = this.input.gamepad.gamepads;
-
-        this.gamepad = null;
-        for (var i = 0; i < pads.length; i++) {
-            this.gamepad = pads[i];
-            if (!this.gamepad) {
-                continue;
-            }
-        }
+        if (!this.gamepad) this.gamepad = gamepad_find(this);
 
         this.update_player();
 
-        this.update_player_gamepad();
-
-        if (this.cursors.replay.isDown || this.gamepad?.buttonY) {
+        if (keyboard(this.keyboard, 'enter') || gamepad(this.gamepad, 'y')) {
             this.update_reset();
         }
 
-        if (this.cursors.exit.isDown || this.gamepad?.start) {
+        if (keyboard(this.keyboard, 'esc') || gamepad(this.gamepad, 'start')) {
             this.update_reset();
             score = null;
-            this.scene.start('Menu');
+            this.time.addEvent({
+                delay: 1000,
+                loop: false,
+                callback: () => {
+                    this.scene.start('Menu');
+                },
+            });
         }
     }
 
     update_player() {
-        if (
-            (this.cursors.right.isDown || this.gamepad?.right === true) &&
-            this.player.body.onFloor()
-        ) {
+        // if ((keyboard(this.keyboard, 'd') || gamepad(this.gamepad, 'right')) && this.player.body.onFloor()) {
+        if (keyboard(this.keyboard, 'd') || gamepad(this.gamepad, 'right')) {
             if (this.currentSpeed < this.maxSpeed) {
-                this.currentSpeed += this.currentSpeed < 50 ? 0.5 : 1;
-                this.player.setVelocityX(this.currentSpeed);
+                this.currentSpeed += 2;
+                console.log(this.currentSpeed);
             }
         }
 
-        //if (this.cursors.right.isUp && this.player.body.onFloor()) {
-        if (this.cursors.right.isUp || this.gamepad?.right === false) {
+        // if (this.cursors.right.isUp && this.player.body.onFloor()) {
+        if (!keyboard(this.keyboard, 'd') && !gamepad(this.gamepad, 'right')) {
             if (this.currentSpeed > 0) {
-                this.currentSpeed -= 0.5;
-                this.player.setVelocityX(this.currentSpeed);
-            } else {
-                this.currentSpeed = 0;
-            }
-        }
-
-        //if (this.cursors.left.isDown && this.player.body.onFloor()) {
-        if (this.cursors.left.isDown || this.gamepad?.left === true) {
-            if (this.currentSpeed !== 0) {
-                this.currentSpeed -= 2;
-                if (this.currentSpeed < 0) {
-                    this.currentSpeed = 0;
-                }
-            }
-        }
-
-        if (this.cursors.jump.isDown || this.gamepad?.buttonA === true) {
-            if (!this.jumping && this.player.body.onFloor()) {
-                this.jumping = true;
-                this.player.body.setVelocityY(
-                    this.currentSpeed > 300 ? -525 : -425
-                );
-            }
-        }
-
-        if (this.cursors.jump.isUp || this.gamepad?.buttonA === false) {
-            if (this.jumping && this.player.body.onFloor()) {
-                this.jumping = false;
-            }
-        }
-
-        if (this.cursors.down.isDown || this.gamepad?.down === true) {
-            this.player.body
-                .setSize(50, 70, false)
-                .setOffset(this.player.frame.x, this.player.frame.y + 30);
-        }
-
-        if (this.cursors.down.isUp || this.gamepad?.down === false) {
-            this.player.body
-                .setSize(50, 100, false)
-                .setOffset(this.player.frame.x, this.player.frame.y);
-        }
-    }
-
-    update_player_gamepad() {
-        if (this.gamepad?.right === true && this.player.body.onFloor()) {
-            if (this.currentSpeed < this.maxSpeed) {
-                this.currentSpeed += this.currentSpeed < 50 ? 0.3 : 1;
-                this.player.setVelocityX(this.currentSpeed);
-            }
-        }
-
-        //if (this.cursors.right.isUp && this.player.body.onFloor()) {
-        if (this.gamepad?.right === false) {
-            if (this.currentSpeed > 0) {
-                this.currentSpeed -= 0.3;
-                this.player.setVelocityX(this.currentSpeed);
-            } else {
-                this.currentSpeed = 0;
-            }
-        }
-
-        //if (this.cursors.left.isDown && this.player.body.onFloor()) {
-        if (this.gamepad?.left === true) {
-            if (this.currentSpeed !== 0) {
                 this.currentSpeed -= 1;
+                console.log(this.currentSpeed);
+            } else {
+                this.currentSpeed = 0;
+            }
+        }
+
+        //if (this.cursors.left.isDown && this.player.body.onFloor()) {
+        if (keyboard(this.keyboard, 'a') || gamepad(this.gamepad, 'left')) {
+            if (this.currentSpeed !== 0) {
+                this.currentSpeed -= 4;
+                console.log(this.currentSpeed);
                 if (this.currentSpeed < 0) {
                     this.currentSpeed = 0;
                 }
             }
         }
 
-        if (this.gamepad?.buttons[0]?.pressed === true) {
+        if (keyboard(this.keyboard, 'w') || gamepad(this.gamepad, 'a')) {
             if (!this.jumping && this.player.body.onFloor()) {
                 this.jumping = true;
                 this.player.body.setVelocityY(
@@ -590,23 +595,25 @@ class Game extends Phaser.Scene {
             }
         }
 
-        if (this.gamepad?.up === false) {
+        if (!keyboard(this.keyboard, 'w') && !gamepad(this.gamepad, 'a')) {
             if (this.jumping && this.player.body.onFloor()) {
                 this.jumping = false;
             }
         }
 
-        if (this.gamepad?.down === true) {
+        if (keyboard(this.keyboard, 's') || gamepad(this.gamepad, 'down')) {
             this.player.body
                 .setSize(50, 70, false)
                 .setOffset(this.player.frame.x, this.player.frame.y + 30);
         }
 
-        if (this.gamepad?.down === false) {
+        if (!keyboard(this.keyboard, 's') && !gamepad(this.gamepad, 'down')) {
             this.player.body
                 .setSize(50, 100, false)
                 .setOffset(this.player.frame.x, this.player.frame.y);
         }
+
+        this.player.setVelocityX(this.currentSpeed);
     }
 
     update_reset() {
@@ -618,20 +625,17 @@ class Game extends Phaser.Scene {
 }
 
 const config = {
-    type: Phaser.CANVAS,
-    pixelArt: true,
-    scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
+    backgroundColor: '0xdcdcdc',
+    fps: {
+        target: 60,
+        forceSetTimeOut: true,
     },
     width: window.innerWidth * window.devicePixelRatio,
     height: window.innerHeight * window.devicePixelRatio,
-    backgroundColor: '0xdcdcdc',
-    parent: 'game',
-    scene: [Menu, Game],
     input: {
         gamepad: true,
     },
+    parent: 'game',
     physics: {
         default: 'arcade',
         arcade: {
@@ -639,6 +643,15 @@ const config = {
             debug: false,
         },
     },
+    render: {
+        pixelArt: true,
+    },
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+    },
+    scene: [Menu, Game],
+    type: Phaser.CANVAS,
 };
 
 const game = new Phaser.Game(config);
