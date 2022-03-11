@@ -6,8 +6,6 @@ TODO:
 
 - salvar ranking passado do desafiador junto do share mas encryptado
 - base64 no cenario e ranking vencedor?
-- so fazer os objetos andarem quando o personagem começa a correr ( para o tempo começar a contar)
-- gerar novo cenário tem de abrir /miolo automatica
 - criar ferramenta de compartilhamento
 - aprender adicionar sons
 - colocar cenário de fundo e de frente alem do ceu
@@ -138,24 +136,19 @@ class Menu extends Phaser.Scene {
         this.keyboard = keyboard_find(this);
 
         if (record != null && String(record) === String(score)) {
-            this.recordText = this.add.text(
-                this.width / 2 - 300,
-                100,
-                'novo recorde!',
-                {
-                    font: '40px Courier New',
-                    fill: '#000',
-                }
-            );
+            this.recordText = this.add.text(100, 100, 'NOVO RECORDE!', {
+                font: '19px verdana',
+                fill: '#000',
+            });
         }
 
         if (score !== null) {
             this.scoreText = this.add.text(
-                this.width / 2 - 300,
+                100,
                 200,
-                'seu tempo foi ' + convert_time(score),
+                'SEU TEMPO FOI ' + convert_time(score),
                 {
-                    font: '15px Courier New',
+                    font: '10px verdana',
                     fill: '#000',
                 }
             );
@@ -163,67 +156,48 @@ class Menu extends Phaser.Scene {
 
         if (record != null) {
             this.recordText = this.add.text(
-                this.width / 2 - 300,
+                100,
                 250,
-                'seu recorde atual é ' + convert_time(record),
+                'SEU RECORDE ATUAL É ' + convert_time(record),
                 {
-                    font: '15px Courier New',
+                    font: '10px verdana',
                     fill: '#000',
                 }
             );
             this.startText = this.add.text(
-                this.width / 2 - 300,
+                100,
                 300,
-                '[ENTER] / (A) tentar de novo',
+                '(A) OU [ENTER] TENTAR DE NOVO\n\n(Y) OU [S]  COMPARTILHAR PERCURSO\n\n(X) OU [X]  GERAR NOVO PERCURSO',
                 {
-                    font: '20px Courier New',
-                    fill: '#888',
-                }
-            );
-            this.shareText = this.add.text(
-                this.width / 2 - 300,
-                350,
-                '[S] / (SELECT) compartilhar percurso',
-                {
-                    font: '20px Courier New',
-                    fill: '#888',
+                    font: '10px verdana',
+                    fill: '#777',
                 }
             );
         } else {
             this.startText = this.add.text(
-                this.width / 2 - 300,
+                100,
                 350,
-                '[ENTER] / (A) começar',
+                '(A) OU [ENTER] COMEÇAR\n\n(X) OU [X] GERAR NOVO PERCURSO',
                 {
-                    font: '20px Courier New',
-                    fill: '#888',
+                    font: '10px verdana',
+                    fill: '#777',
                 }
             );
         }
-
-        this.createText = this.add.text(
-            this.width / 2 - 300,
-            500,
-            '[X] / (X) gerar novo percurso',
-            {
-                font: '30px Courier New',
-                fill: '#888',
-            }
-        );
     }
 
     update() {
         if (!this.gamepad) this.gamepad = gamepad_find(this);
 
         if (gamepad(this.gamepad, 'a') || keyboard(this.keyboard, 'enter')) {
-            this.startText?.setText('prepare-se . . .');
+            this.startText?.setText('CARREGANDO . . .');
             setTimeout(() => {
                 this.scene.start('Game');
             }, 200);
         }
 
         if (gamepad(this.gamepad, 'x') || keyboard(this.keyboard, 'x')) {
-            this.startText?.setText('gerando novo percurso . . .');
+            this.startText?.setText('GERANDO NOVO PERCURSO . . .');
             this.recordText?.setText('');
             stage_create();
             record = null;
@@ -249,9 +223,6 @@ class Game extends Phaser.Scene {
 
         this.load.image('sky', 'assets/sky.png');
         this.load.image('tiles', 'assets/map.png');
-        this.load.tilemapTiledJSON('map', 'assets/map.json');
-        this.load.image('tiles2', 'assets/ground.png');
-        this.load.tilemapTiledJSON('map2', 'assets/ground.json');
         this.load.image('first', 'assets/first.png');
         this.load.image('mount', 'assets/mount.png');
 
@@ -409,12 +380,19 @@ class Game extends Phaser.Scene {
                 speed = -240;
             }
 
+            if (number === 7) {
+                x = 50 + 340;
+                y = 100;
+                obs = '100x100';
+                speed = -240;
+            }
+
             if (number === 0 && countZeros < 3) {
                 countZeros += 1;
                 obstacleX += 240;
             }
 
-            if (number > 0 && number < 5 && obs !== '') {
+            if (number > 0 && number < 6 && obs !== '') {
                 countZeros = 0;
                 obstacleX += x;
                 const current = this.physics.add
@@ -426,7 +404,7 @@ class Game extends Phaser.Scene {
                 obstacleX += x;
             }
 
-            if (number > 5 && obs !== '') {
+            if (number == 6 && obs !== '') {
                 countZeros = 0;
                 obstacleX += x;
                 const current = this.physics.add
@@ -443,6 +421,28 @@ class Game extends Phaser.Scene {
                     },
                     callbackScope: this,
                     delay: 100,
+                    loop: true,
+                });
+                obstacleX += x;
+            }
+
+            if (number == 7 && obs !== '') {
+                countZeros = 0;
+                obstacleX += x;
+                const current = this.physics.add
+                    .sprite(obstacleX, height - y, obs)
+                    .setDepth(20);
+                current.setCollideWorldBounds(true).setDepth(20);
+                this.physics.add.collider(current, ground);
+                this.physics.add.collider(current, this.player, () => {
+                    this.update_reset();
+                });
+                this.time.addEvent({
+                    callback: () => {
+                        if (this.currentSpeed > 0) current.setVelocityY(-1000);
+                    },
+                    callbackScope: this,
+                    delay: 4000,
                     loop: true,
                 });
                 obstacleX += x;
@@ -474,6 +474,16 @@ class Game extends Phaser.Scene {
             .tileSprite(0, height - 300, width * 10, 500, 'sky')
             .setScrollFactor(0.05)
             .setDepth(10);
+
+        this.add
+            .tileSprite(0, height - 40, width * 10, 450, 'mount')
+            .setScrollFactor(0.2)
+            .setDepth(12);
+
+        this.add
+            .tileSprite(0, height - 65, width * 10, 130, 'first')
+            .setScrollFactor(6)
+            .setDepth(80);
 
         // text ================================================================
 
@@ -573,9 +583,7 @@ class Game extends Phaser.Scene {
         if (keyboard(this.keyboard, 'esc') || gamepad(this.gamepad, 'start')) {
             score = null;
             this.update_reset();
-            setTimeout(() => {
-                this.scene.start('Menu');
-            }, 200);
+            this.scene.start('Menu');
         }
     }
 
