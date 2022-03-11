@@ -34,9 +34,13 @@ let record = window.localStorage.getItem(stage);
 
 let score = null;
 
+let size = 22;
+
+let dificult = 'easy';
+
 function stage_create() {
     let stageTemp = '';
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 24; i++) {
         const number = Phaser.Math.Between(1, 6);
         stageTemp = stageTemp + '' + number;
         const zeros = Phaser.Math.Between(0, 3);
@@ -67,7 +71,6 @@ const gamepad_find = (__this) => {
         for (let i = 0; i < pads.length; i++) {
             if (pads[i]) {
                 found = pads[i];
-                console.log(found);
                 break;
             }
         }
@@ -90,11 +93,11 @@ const gamepad = (gamepad, button) => {
         if (buttons[9]?.pressed && button === 'start') return true;
         if (buttons[10]?.pressed && button === 'l3') return true;
         if (buttons[11]?.pressed && button === 'r3') return true;
+        if (gamepad.down && button === 'down') return true;
         if (gamepad.left && button === 'left') return true;
         if (gamepad.left && button === 'left') return true;
         if (gamepad.right && button === 'right') return true;
         if (gamepad.up && button === 'up') return true;
-        if (gamepad.down && button === 'down') return true;
     }
     return false;
 };
@@ -102,58 +105,27 @@ const gamepad = (gamepad, button) => {
 const keyboard_find = (__this) => {
     return __this.input.keyboard.addKeys({
         a: Phaser.Input.Keyboard.KeyCodes.A,
-        c: Phaser.Input.Keyboard.KeyCodes.C,
         d: Phaser.Input.Keyboard.KeyCodes.D,
         enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
         esc: Phaser.Input.Keyboard.KeyCodes.ESC,
         s: Phaser.Input.Keyboard.KeyCodes.S,
         w: Phaser.Input.Keyboard.KeyCodes.W,
+        x: Phaser.Input.Keyboard.KeyCodes.X,
     });
 };
 
 const keyboard = (keyboard, button) => {
     if (keyboard) {
         if (keyboard.a.isDown && button === 'a') return true;
-        if (keyboard.c.isDown && button === 'c') return true;
         if (keyboard.d.isDown && button === 'd') return true;
         if (keyboard.enter.isDown && button === 'enter') return true;
         if (keyboard.esc.isDown && button === 'esc') return true;
         if (keyboard.s.isDown && button === 's') return true;
         if (keyboard.w.isDown && button === 'w') return true;
+        if (keyboard.x.isDown && button === 'x') return true;
     }
     return false;
 };
-
-class Example extends Phaser.Scene {
-    constructor() {
-        super('Example');
-    }
-
-    preload() {}
-
-    create() {
-        this.width = this.sys.game.canvas.width;
-        this.height = this.sys.game.canvas.heigh;
-        this.keyboard = keyboard_find(this);
-    }
-
-    update() {
-        if (!this.gamepad) this.gamepad = gamepad_find(this);
-
-        if (
-            gamepad(this.gamepad, 'start') ||
-            keyboard(this.keyboard, 'enter')
-        ) {
-            this.time.addEvent({
-                delay: 1000,
-                loop: false,
-                callback: () => {
-                    this.scene.start('Menu');
-                },
-            });
-        }
-    }
-}
 
 class Menu extends Phaser.Scene {
     constructor() {
@@ -202,7 +174,7 @@ class Menu extends Phaser.Scene {
             this.startText = this.add.text(
                 this.width / 2 - 300,
                 300,
-                '[ENTER] / (START) tentar de novo',
+                '[ENTER] / (A) tentar de novo',
                 {
                     font: '20px Courier New',
                     fill: '#888',
@@ -221,7 +193,7 @@ class Menu extends Phaser.Scene {
             this.startText = this.add.text(
                 this.width / 2 - 300,
                 350,
-                '[ENTER] / (START) começar',
+                '[ENTER] / (A) começar',
                 {
                     font: '20px Courier New',
                     fill: '#888',
@@ -232,7 +204,7 @@ class Menu extends Phaser.Scene {
         this.createText = this.add.text(
             this.width / 2 - 300,
             500,
-            '[C] / (Y) gerar novo percurso',
+            '[X] / (X) gerar novo percurso',
             {
                 font: '30px Courier New',
                 fill: '#888',
@@ -243,33 +215,22 @@ class Menu extends Phaser.Scene {
     update() {
         if (!this.gamepad) this.gamepad = gamepad_find(this);
 
-        if (
-            gamepad(this.gamepad, 'start') ||
-            keyboard(this.keyboard, 'enter')
-        ) {
+        if (gamepad(this.gamepad, 'a') || keyboard(this.keyboard, 'enter')) {
             this.startText?.setText('prepare-se . . .');
-            this.time.addEvent({
-                delay: 1000,
-                loop: false,
-                callback: () => {
-                    this.scene.start('Game');
-                },
-            });
+            setTimeout(() => {
+                this.scene.start('Game');
+            }, 200);
         }
 
-        if (gamepad(this.gamepad, 'y') || keyboard(this.keyboard, 'r')) {
+        if (gamepad(this.gamepad, 'x') || keyboard(this.keyboard, 'x')) {
             this.startText?.setText('gerando novo percurso . . .');
             this.recordText?.setText('');
             stage_create();
             record = null;
             score = null;
-            this.time.addEvent({
-                delay: 1000,
-                loop: false,
-                callback: () => {
-                    this.scene.restart();
-                },
-            });
+            setTimeout(() => {
+                this.scene.restart();
+            }, 200);
         }
     }
 }
@@ -396,7 +357,7 @@ class Game extends Phaser.Scene {
 
         // obstacle ============================================================
 
-        let obstacleX = 2500;
+        let obstacleX = 2400;
         let countZeros = 0;
         for (let i = 0; i < stage.length; i++) {
             const number = Number(stage[i]);
@@ -407,35 +368,35 @@ class Game extends Phaser.Scene {
             let obs = '';
 
             if (number === 1) {
-                x = 25 + 250;
+                x = 25 + 240;
                 y = 75;
                 obs = '50x50';
                 speed = 0;
             }
 
             if (number === 2) {
-                x = 50 + 350;
+                x = 50 + 340;
                 y = 100;
                 obs = '100x100';
                 speed = 0;
             }
 
             if (number === 3) {
-                x = 25 + 250;
+                x = 25 + 240;
                 y = 150;
                 obs = '50x50_air';
                 speed = 0;
             }
 
             if (number === 4) {
-                x = 50 + 250;
+                x = 50 + 240;
                 y = 175;
                 obs = '100x100_air';
                 speed = 0;
             }
 
             if (number === 5) {
-                x = 100 + 350;
+                x = 100 + 340;
                 y = 100;
                 obs = '200x100';
                 speed = 0;
@@ -445,12 +406,12 @@ class Game extends Phaser.Scene {
                 x = 50;
                 y = 75;
                 obs = '100x50_run';
-                speed = -250;
+                speed = -240;
             }
 
             if (number === 0 && countZeros < 3) {
                 countZeros += 1;
-                obstacleX += 250;
+                obstacleX += 240;
             }
 
             if (number > 0 && number < 5 && obs !== '') {
@@ -470,12 +431,19 @@ class Game extends Phaser.Scene {
                 obstacleX += x;
                 const current = this.physics.add
                     .sprite(obstacleX, height - y, obs)
-                    .setDepth(20)
-                    .setVelocityX(speed);
+                    .setDepth(20);
                 current.setCollideWorldBounds(true).setDepth(20);
                 this.physics.add.collider(current, ground);
                 this.physics.add.collider(current, this.player, () => {
                     this.update_reset();
+                });
+                this.time.addEvent({
+                    callback: () => {
+                        if (this.currentSpeed > 0) current.setVelocityX(speed);
+                    },
+                    callbackScope: this,
+                    delay: 100,
+                    loop: true,
                 });
                 obstacleX += x;
             }
@@ -484,7 +452,7 @@ class Game extends Phaser.Scene {
         // finish ==============================================================
 
         const finish = this.physics.add.staticSprite(
-            obstacleX + 1500,
+            obstacleX + 1400,
             height - 200,
             'finish'
         );
@@ -527,7 +495,7 @@ class Game extends Phaser.Scene {
 
         this.time.addEvent({
             callback: () => {
-                if (this.currentSpeed > 0) {
+                if (this.currentSpeed > 0 || this.allTime > 1) {
                     this.allTime += 1;
                     this.scoreText?.setText(convert_time(this.allTime));
                 }
@@ -541,31 +509,10 @@ class Game extends Phaser.Scene {
     update() {
         if (!this.gamepad) this.gamepad = gamepad_find(this);
 
-        this.update_player();
-
-        if (keyboard(this.keyboard, 'enter') || gamepad(this.gamepad, 'y')) {
-            this.update_reset();
-        }
-
-        if (keyboard(this.keyboard, 'esc') || gamepad(this.gamepad, 'start')) {
-            this.update_reset();
-            score = null;
-            this.time.addEvent({
-                delay: 1000,
-                loop: false,
-                callback: () => {
-                    this.scene.start('Menu');
-                },
-            });
-        }
-    }
-
-    update_player() {
         // if ((keyboard(this.keyboard, 'd') || gamepad(this.gamepad, 'right')) && this.player.body.onFloor()) {
         if (keyboard(this.keyboard, 'd') || gamepad(this.gamepad, 'right')) {
             if (this.currentSpeed < this.maxSpeed) {
                 this.currentSpeed += 2;
-                console.log(this.currentSpeed);
             }
         }
 
@@ -573,7 +520,6 @@ class Game extends Phaser.Scene {
         if (!keyboard(this.keyboard, 'd') && !gamepad(this.gamepad, 'right')) {
             if (this.currentSpeed > 0) {
                 this.currentSpeed -= 1;
-                console.log(this.currentSpeed);
             } else {
                 this.currentSpeed = 0;
             }
@@ -583,7 +529,6 @@ class Game extends Phaser.Scene {
         if (keyboard(this.keyboard, 'a') || gamepad(this.gamepad, 'left')) {
             if (this.currentSpeed !== 0) {
                 this.currentSpeed -= 4;
-                console.log(this.currentSpeed);
                 if (this.currentSpeed < 0) {
                     this.currentSpeed = 0;
                 }
@@ -620,6 +565,18 @@ class Game extends Phaser.Scene {
         }
 
         this.player.setVelocityX(this.currentSpeed);
+
+        if (keyboard(this.keyboard, 'enter') || gamepad(this.gamepad, 'y')) {
+            this.update_reset();
+        }
+
+        if (keyboard(this.keyboard, 'esc') || gamepad(this.gamepad, 'start')) {
+            score = null;
+            this.update_reset();
+            setTimeout(() => {
+                this.scene.start('Menu');
+            }, 200);
+        }
     }
 
     update_reset() {
