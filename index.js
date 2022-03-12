@@ -3,6 +3,10 @@
 const width = window.innerWidth;
 const height = window.innerHeight;
 
+let stage = null;
+let score = null;
+let record = null;
+
 // controls ====================================================================
 
 const keyboard_find = (that) => {
@@ -76,7 +80,40 @@ const gamepad_press = (gamepad, button) => {
     return false;
 };
 
-// scene : Preload =============================================================
+// utils =======================================================================
+
+const convert_time = (time) => {
+    const fix = new Date(time * 10);
+    const min = String(fix.getMinutes()).padStart(2, '0');
+    const sec = String(fix.getSeconds()).padStart(2, '0');
+    const mil = String(fix.getMilliseconds()).slice(0, 2).padStart(2, '0');
+    return min + ':' + sec + ',' + mil;
+};
+
+const stage_from_url = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('o')) {
+        let stage = urlParams.get('o').replace(/[^0-9|]/g, '');
+        if (stage.length > 120) stage = stage.slice(0, 119);
+        return stage;
+    }
+    return null;
+};
+
+const stage_from_create = () => {
+    let stageTemp = '';
+    for (let i = 0; i < 22; i++) {
+        const number = Phaser.Math.Between(1, 6);
+        stageTemp = stageTemp + '' + number;
+        const zeros = Phaser.Math.Between(0, 3);
+        for (z = 0; z < zeros; z++) stageTemp = stageTemp + '0';
+    }
+    stage = stageTemp;
+    record = window.localStorage.getItem(stageTemp);
+    window.history.pushState(null, null, '/miolo?o=' + stageTemp);
+};
+
+// scene : preload =============================================================
 
 class Preload extends Phaser.Scene {
     constructor() {
@@ -92,7 +129,6 @@ class Preload extends Phaser.Scene {
             progress.fillStyle(0xdddddd, 1);
             progress.fillRect(0, 0, width * value, height);
         });
-
         // load ----------------------------------------------------------------
         this.load.image('sky', 'assets/sky.png');
         this.load.image('tiles', 'assets/map.png');
@@ -137,73 +173,16 @@ class Preload extends Phaser.Scene {
     }
 
     create() {
+        // preload stage -------------------------------------------------------
+        stage = stage_from_url();
+        if (!stage) stage = stage_from_create();
+        record = window.localStorage.getItem(stage);
+        // redirect to menu ----------------------------------------------------
         this.scene.start('Menu');
     }
 }
 
-// import Phaser from 'phaser';
-
-/*
-
-TODO:
-
-- salvar ranking passado do desafiador junto do share mas encryptado
-- base64 no cenario e ranking vencedor?
-- criar ferramenta de compartilhamento
-- aprender adicionar sons
-- colocar cenário de fundo e de frente alem do ceu
-*/
-
-// stage by url ================================================================
-
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('o')) {
-    let stageParam = urlParams.get('o').replace(/[^0-9]/g, '');
-    if (stageParam.length > 120) stageParam = stageParam.slice(0, 119);
-    window.localStorage.setItem('stage', stageParam);
-}
-
-// stage by storage ============================================================
-
-let stage = window.localStorage.getItem('stage')
-    ? window.localStorage.getItem('stage')
-    : '';
-
-// record by stage =============================================================
-
-let record = window.localStorage.getItem(stage);
-
-let score = null;
-
-let size = 22;
-
-let dificult = 'easy';
-
-function stage_create() {
-    let stageTemp = '';
-    for (let i = 0; i < 40; i++) {
-        const number = Phaser.Math.Between(1, 6);
-        stageTemp = stageTemp + '' + number;
-        const zeros = Phaser.Math.Between(0, 3);
-        for (z = 0; z < zeros; z++) stageTemp = stageTemp + '0';
-    }
-    window.localStorage.setItem('stage', stageTemp);
-    stage = stageTemp;
-    record = window.localStorage.getItem(stageTemp);
-    window.history.pushState(null, null, '/miolo?o=' + stageTemp);
-}
-
-if (stage === '') {
-    stage_create();
-}
-
-function convert_time(time) {
-    const fix = new Date(time * 10);
-    const min = String(fix.getMinutes()).padStart(2, '0');
-    const sec = String(fix.getSeconds()).padStart(2, '0');
-    const mil = String(fix.getMilliseconds()).slice(0, 2).padStart(2, '0');
-    return min + ':' + sec + ',' + mil;
-}
+// scene : menu ================================================================
 
 class Menu extends Phaser.Scene {
     constructor() {
@@ -213,9 +192,6 @@ class Menu extends Phaser.Scene {
     create() {
         this.keyboard = keyboard_find(this);
         this.gamepad = null;
-
-        this.width = this.sys.game.canvas.width;
-        this.height = this.sys.game.canvas.heigh;
 
         if (record != null && String(record) === String(score)) {
             this.recordText = this.add.text(100, 100, 'NOVO RECORDE!', {
@@ -274,24 +250,26 @@ class Menu extends Phaser.Scene {
         const gamepad = (button) => gamepad_press(this.gamepad, button);
 
         if (gamepad('a') || keyboard('enter')) {
-            this.startText?.setText('CARREGANDO . . .');
+            this.startText?.setText('CARREGANDO...');
             setTimeout(() => {
                 this.scene.start('Game');
             }, 200);
         }
 
         if (gamepad('x') || keyboard('x')) {
-            this.startText?.setText('GERANDO NOVO PERCURSO . . .');
+            this.startText?.setText('GERANDO NOVO PERCURSO...');
             this.recordText?.setText('');
-            stage_create();
-            record = null;
+            stage = stage_from_create();
             score = null;
+            record = null;
             setTimeout(() => {
                 this.scene.restart();
             }, 200);
         }
     }
 }
+
+// scene : game ================================================================
 
 class Game extends Phaser.Scene {
     constructor() {
@@ -352,68 +330,60 @@ class Game extends Phaser.Scene {
 
         // obstacle ============================================================
 
-        let obstacleX = 2400;
+        let obstacleX = 2600;
         let countZeros = 0;
         for (let i = 0; i < stage.length; i++) {
             const number = Number(stage[i]);
 
             let x = 0;
             let y = 0;
-            let speed = 0;
             let obs = '';
 
             if (number === 1) {
-                x = 25 + 240;
+                x = 25 + 260;
                 y = 75;
                 obs = '50x50';
-                speed = 0;
             }
 
             if (number === 2) {
-                x = 50 + 340;
+                x = 50 + 360;
                 y = 100;
                 obs = '100x100';
-                speed = 0;
             }
 
             if (number === 3) {
-                x = 25 + 240;
+                x = 25 + 260;
                 y = 150;
                 obs = '50x50_air';
-                speed = 0;
             }
 
             if (number === 4) {
-                x = 50 + 240;
+                x = 50 + 260;
                 y = 175;
                 obs = '100x100_air';
-                speed = 0;
             }
 
             if (number === 5) {
-                x = 100 + 340;
+                x = 100 + 360;
                 y = 100;
                 obs = '200x100';
-                speed = 0;
             }
 
             if (number === 6) {
-                x = 50 + 340;
+                x = 50 + 360;
                 y = 75;
                 obs = '100x50_run';
-                speed = -340;
             }
 
             if (number === 7) {
-                x = 50 + 340;
+                x = 50 + 360;
                 y = 100;
                 obs = '100x100';
-                speed = -180;
             }
 
             if (number === 0 && countZeros < 3) {
                 countZeros += 1;
-                obstacleX += 240;
+                obstacleX += 260;
             }
 
             if (number > 0 && number < 6 && obs !== '') {
@@ -433,15 +403,15 @@ class Game extends Phaser.Scene {
                 obstacleX += x;
                 const current = this.physics.add
                     .sprite(obstacleX, height - y, obs)
+                    .setCollideWorldBounds(true)
                     .setDepth(20);
-                current.setCollideWorldBounds(true).setDepth(20);
                 this.physics.add.collider(current, ground);
                 this.physics.add.collider(current, this.player, () => {
                     this.update_reset();
                 });
                 this.time.addEvent({
                     callback: () => {
-                        if (this.currentSpeed > 0) current.setVelocityX(speed);
+                        if (this.currentSpeed > 0) current.setVelocityX(-360);
                     },
                     callbackScope: this,
                     delay: 100,
@@ -476,7 +446,7 @@ class Game extends Phaser.Scene {
         // finish ==============================================================
 
         const finish = this.physics.add.staticSprite(
-            obstacleX + 1400,
+            obstacleX + 1600,
             height - 200,
             'finish'
         );
@@ -544,8 +514,6 @@ class Game extends Phaser.Scene {
         if (!this.gamepad) this.gamepad = gamepad_find(this);
         const keyboard = (button) => keyboard_press(this.keyboard, button);
         const gamepad = (button) => gamepad_press(this.gamepad, button);
-
-        console.log(keyboard('a'));
 
         // if ((keyboard('d') || gamepad('right')) && this.player.body.onFloor()) {
         if (keyboard('d') || gamepad('right')) {
@@ -623,6 +591,8 @@ class Game extends Phaser.Scene {
     }
 }
 
+// config ======================================================================
+
 const config = {
     backgroundColor: '0xdcdcdc',
     fps: {
@@ -655,3 +625,13 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+
+/*
+import Phaser from 'phaser';
+
+- salvar ranking passado do desafiador junto do share mas encryptado
+- base64 no cenario e ranking vencedor?
+- criar ferramenta de compartilhamento
+- aprender adicionar sons
+- colocar cenário de fundo e de frente alem do ceu
+*/
