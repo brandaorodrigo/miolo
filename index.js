@@ -1,3 +1,146 @@
+// global ======================================================================
+
+const width = window.innerWidth;
+const height = window.innerHeight;
+
+// controls ====================================================================
+
+const keyboard_find = (that) => {
+    const keys = [
+        'a',
+        'alt',
+        'backspace',
+        'c',
+        'ctrl',
+        'd',
+        'e',
+        'enter',
+        'esc',
+        'q',
+        'r',
+        's',
+        'shift',
+        'space',
+        'tab',
+        'w',
+        'x',
+        'z',
+    ];
+    const map = [];
+    keys.forEach((key) => {
+        map[key] = Phaser.Input.Keyboard.KeyCodes[key.toUpperCase()];
+    });
+    return that.input.keyboard.addKeys(map);
+};
+
+const keyboard_press = (keyboard, button) => {
+    if (keyboard && keyboard[button] && keyboard[button].isDown) return true;
+    else return false;
+};
+
+const gamepad_find = (that) => {
+    let found = false;
+    if (that.input.gamepad.total !== 0) {
+        const pads = that.input.gamepad.gamepads;
+        for (let i = 0; i < pads.length; i++) {
+            if (pads[i]) {
+                found = pads[i];
+                break;
+            }
+        }
+    }
+    return found;
+};
+
+const gamepad_press = (gamepad, button) => {
+    if (gamepad) {
+        const buttons = gamepad.buttons;
+        if (buttons[0]?.pressed && button === 'a') return true;
+        if (buttons[1]?.pressed && button === 'b') return true;
+        if (buttons[2]?.pressed && button === 'x') return true;
+        if (buttons[3]?.pressed && button === 'y') return true;
+        if (buttons[4]?.pressed && button === 'l1') return true;
+        if (buttons[5]?.pressed && button === 'r1') return true;
+        if (buttons[6]?.pressed && button === 'l2') return true;
+        if (buttons[7]?.pressed && button === 'r2') return true;
+        if (buttons[8]?.pressed && button === 'select') return true;
+        if (buttons[9]?.pressed && button === 'start') return true;
+        if (buttons[10]?.pressed && button === 'l3') return true;
+        if (buttons[11]?.pressed && button === 'r3') return true;
+        if (gamepad.down && button === 'down') return true;
+        if (gamepad.left && button === 'left') return true;
+        if (gamepad.left && button === 'left') return true;
+        if (gamepad.right && button === 'right') return true;
+        if (gamepad.up && button === 'up') return true;
+    }
+    return false;
+};
+
+// scene : Preload =============================================================
+
+class Preload extends Phaser.Scene {
+    constructor() {
+        super('Preload');
+    }
+
+    preload() {
+        // progress ------------------------------------------------------------
+        this.cameras.main.setBackgroundColor(0x222222);
+        let progress = this.add.graphics();
+        this.load.on('progress', (value) => {
+            progress.clear();
+            progress.fillStyle(0xdddddd, 1);
+            progress.fillRect(0, 0, width * value, height);
+        });
+
+        // load ----------------------------------------------------------------
+        this.load.image('sky', 'assets/sky.png');
+        this.load.image('tiles', 'assets/map.png');
+        this.load.image('first', 'assets/first.png');
+        this.load.image('mount', 'assets/mount.png');
+        this.load.spritesheet('ground', 'assets/ground.png', {
+            frameWidth: 500,
+            frameHeight: 50,
+        });
+        this.load.spritesheet('player', 'assets/player.png', {
+            frameWidth: 50,
+            frameHeight: 100,
+        });
+        this.load.spritesheet('finish', 'assets/finish.png', {
+            frameWidth: 300,
+            frameHeight: 300,
+        });
+        this.load.spritesheet('50x50', 'assets/obstacle.png', {
+            frameWidth: 50,
+            frameHeight: 50,
+        });
+        this.load.spritesheet('100x100', 'assets/obstacle.png', {
+            frameWidth: 100,
+            frameHeight: 100,
+        });
+        this.load.spritesheet('50x50_air', 'assets/obstacle.png', {
+            frameWidth: 50,
+            frameHeight: 50,
+        });
+        this.load.spritesheet('100x100_air', 'assets/obstacle.png', {
+            frameWidth: 100,
+            frameHeight: 100,
+        });
+        this.load.spritesheet('200x100', 'assets/obstacle.png', {
+            frameWidth: 200,
+            frameHeight: 100,
+        });
+        this.load.spritesheet('100x50_run', 'assets/obstacle.png', {
+            frameWidth: 100,
+            frameHeight: 50,
+        });
+    }
+
+    create() {
+        this.scene.start('Menu');
+    }
+}
+
 // import Phaser from 'phaser';
 
 /*
@@ -38,7 +181,7 @@ let dificult = 'easy';
 
 function stage_create() {
     let stageTemp = '';
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 40; i++) {
         const number = Phaser.Math.Between(1, 6);
         stageTemp = stageTemp + '' + number;
         const zeros = Phaser.Math.Between(0, 3);
@@ -62,78 +205,17 @@ function convert_time(time) {
     return min + ':' + sec + ',' + mil;
 }
 
-const gamepad_find = (__this) => {
-    let found = false;
-    if (__this.input.gamepad.total !== 0) {
-        const pads = __this.input.gamepad.gamepads;
-        for (let i = 0; i < pads.length; i++) {
-            if (pads[i]) {
-                found = pads[i];
-                break;
-            }
-        }
-    }
-    return found;
-};
-
-const gamepad = (gamepad, button) => {
-    if (gamepad) {
-        const buttons = gamepad.buttons;
-        if (buttons[0]?.pressed && button === 'a') return true;
-        if (buttons[1]?.pressed && button === 'b') return true;
-        if (buttons[2]?.pressed && button === 'x') return true;
-        if (buttons[3]?.pressed && button === 'y') return true;
-        if (buttons[4]?.pressed && button === 'l1') return true;
-        if (buttons[5]?.pressed && button === 'r1') return true;
-        if (buttons[6]?.pressed && button === 'l2') return true;
-        if (buttons[7]?.pressed && button === 'r2') return true;
-        if (buttons[8]?.pressed && button === 'select') return true;
-        if (buttons[9]?.pressed && button === 'start') return true;
-        if (buttons[10]?.pressed && button === 'l3') return true;
-        if (buttons[11]?.pressed && button === 'r3') return true;
-        if (gamepad.down && button === 'down') return true;
-        if (gamepad.left && button === 'left') return true;
-        if (gamepad.left && button === 'left') return true;
-        if (gamepad.right && button === 'right') return true;
-        if (gamepad.up && button === 'up') return true;
-    }
-    return false;
-};
-
-const keyboard_find = (__this) => {
-    return __this.input.keyboard.addKeys({
-        a: Phaser.Input.Keyboard.KeyCodes.A,
-        d: Phaser.Input.Keyboard.KeyCodes.D,
-        enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
-        esc: Phaser.Input.Keyboard.KeyCodes.ESC,
-        s: Phaser.Input.Keyboard.KeyCodes.S,
-        w: Phaser.Input.Keyboard.KeyCodes.W,
-        x: Phaser.Input.Keyboard.KeyCodes.X,
-    });
-};
-
-const keyboard = (keyboard, button) => {
-    if (keyboard) {
-        if (keyboard.a.isDown && button === 'a') return true;
-        if (keyboard.d.isDown && button === 'd') return true;
-        if (keyboard.enter.isDown && button === 'enter') return true;
-        if (keyboard.esc.isDown && button === 'esc') return true;
-        if (keyboard.s.isDown && button === 's') return true;
-        if (keyboard.w.isDown && button === 'w') return true;
-        if (keyboard.x.isDown && button === 'x') return true;
-    }
-    return false;
-};
-
 class Menu extends Phaser.Scene {
     constructor() {
         super('Menu');
     }
 
     create() {
+        this.keyboard = keyboard_find(this);
+        this.gamepad = null;
+
         this.width = this.sys.game.canvas.width;
         this.height = this.sys.game.canvas.heigh;
-        this.keyboard = keyboard_find(this);
 
         if (record != null && String(record) === String(score)) {
             this.recordText = this.add.text(100, 100, 'NOVO RECORDE!', {
@@ -188,15 +270,17 @@ class Menu extends Phaser.Scene {
 
     update() {
         if (!this.gamepad) this.gamepad = gamepad_find(this);
+        const keyboard = (button) => keyboard_press(this.keyboard, button);
+        const gamepad = (button) => gamepad_press(this.gamepad, button);
 
-        if (gamepad(this.gamepad, 'a') || keyboard(this.keyboard, 'enter')) {
+        if (gamepad('a') || keyboard('enter')) {
             this.startText?.setText('CARREGANDO . . .');
             setTimeout(() => {
                 this.scene.start('Game');
             }, 200);
         }
 
-        if (gamepad(this.gamepad, 'x') || keyboard(this.keyboard, 'x')) {
+        if (gamepad('x') || keyboard('x')) {
             this.startText?.setText('GERANDO NOVO PERCURSO . . .');
             this.recordText?.setText('');
             stage_create();
@@ -218,71 +302,11 @@ class Game extends Phaser.Scene {
         this.allTime = 0;
     }
 
-    preload() {
-        // scenario ============================================================
-
-        this.load.image('sky', 'assets/sky.png');
-        this.load.image('tiles', 'assets/map.png');
-        this.load.image('first', 'assets/first.png');
-        this.load.image('mount', 'assets/mount.png');
-
-        // ground ==============================================================
-
-        this.load.spritesheet('ground', 'assets/ground.png', {
-            frameWidth: 500,
-            frameHeight: 50,
-        });
-
-        // player ==============================================================
-
-        this.load.spritesheet('player', 'assets/player.png', {
-            frameWidth: 50,
-            frameHeight: 100,
-        });
-
-        // finish ==============================================================
-
-        this.load.spritesheet('finish', 'assets/finish.png', {
-            frameWidth: 300,
-            frameHeight: 300,
-        });
-
-        // obstacle ============================================================
-
-        this.load.spritesheet('50x50', 'assets/obstacle.png', {
-            frameWidth: 50,
-            frameHeight: 50,
-        });
-
-        this.load.spritesheet('100x100', 'assets/obstacle.png', {
-            frameWidth: 100,
-            frameHeight: 100,
-        });
-
-        this.load.spritesheet('50x50_air', 'assets/obstacle.png', {
-            frameWidth: 50,
-            frameHeight: 50,
-        });
-
-        this.load.spritesheet('100x100_air', 'assets/obstacle.png', {
-            frameWidth: 100,
-            frameHeight: 100,
-        });
-
-        this.load.spritesheet('200x100', 'assets/obstacle.png', {
-            frameWidth: 200,
-            frameHeight: 100,
-        });
-
-        this.load.spritesheet('100x50_run', 'assets/obstacle.png', {
-            frameWidth: 100,
-            frameHeight: 50,
-        });
-    }
-
     create() {
-        // config ==============================================================
         this.keyboard = keyboard_find(this);
+        this.gamepad = null;
+
+        // config ==============================================================
         const { width, height } = this.sys.game.canvas;
 
         // player ==============================================================
@@ -374,17 +398,17 @@ class Game extends Phaser.Scene {
             }
 
             if (number === 6) {
-                x = 50;
+                x = 50 + 340;
                 y = 75;
                 obs = '100x50_run';
-                speed = -240;
+                speed = -340;
             }
 
             if (number === 7) {
                 x = 50 + 340;
                 y = 100;
                 obs = '100x100';
-                speed = -240;
+                speed = -180;
             }
 
             if (number === 0 && countZeros < 3) {
@@ -518,16 +542,20 @@ class Game extends Phaser.Scene {
 
     update() {
         if (!this.gamepad) this.gamepad = gamepad_find(this);
+        const keyboard = (button) => keyboard_press(this.keyboard, button);
+        const gamepad = (button) => gamepad_press(this.gamepad, button);
 
-        // if ((keyboard(this.keyboard, 'd') || gamepad(this.gamepad, 'right')) && this.player.body.onFloor()) {
-        if (keyboard(this.keyboard, 'd') || gamepad(this.gamepad, 'right')) {
+        console.log(keyboard('a'));
+
+        // if ((keyboard('d') || gamepad('right')) && this.player.body.onFloor()) {
+        if (keyboard('d') || gamepad('right')) {
             if (this.currentSpeed < this.maxSpeed) {
                 this.currentSpeed += 2;
             }
         }
 
-        // if (this.cursors.right.isUp && this.player.body.onFloor()) {
-        if (!keyboard(this.keyboard, 'd') && !gamepad(this.gamepad, 'right')) {
+        // if (!keyboard('d') && !gamepad('right') && this.player.body.onFloor()) {
+        if (!keyboard('d') && !gamepad('right')) {
             if (this.currentSpeed > 0) {
                 this.currentSpeed -= 1;
             } else {
@@ -535,8 +563,8 @@ class Game extends Phaser.Scene {
             }
         }
 
-        //if (this.cursors.left.isDown && this.player.body.onFloor()) {
-        if (keyboard(this.keyboard, 'a') || gamepad(this.gamepad, 'left')) {
+        //if ((keyboard('a') || gamepad('left')) && this.player.body.onFloor()) {
+        if (keyboard('a') || gamepad('left')) {
             if (this.currentSpeed !== 0) {
                 this.currentSpeed -= 4;
                 if (this.currentSpeed < 0) {
@@ -545,7 +573,7 @@ class Game extends Phaser.Scene {
             }
         }
 
-        if (keyboard(this.keyboard, 'w') || gamepad(this.gamepad, 'a')) {
+        if (keyboard('w') || gamepad('a')) {
             if (!this.jumping && this.player.body.onFloor()) {
                 this.jumping = true;
                 this.player.body.setVelocityY(
@@ -554,20 +582,20 @@ class Game extends Phaser.Scene {
             }
         }
 
-        if (!keyboard(this.keyboard, 'w') && !gamepad(this.gamepad, 'a')) {
+        if (!keyboard('w') && !gamepad('a')) {
             if (this.jumping && this.player.body.onFloor()) {
                 this.jumping = false;
             }
         }
 
-        if (keyboard(this.keyboard, 's') || gamepad(this.gamepad, 'down')) {
+        if (keyboard('s') || gamepad('down')) {
             this.player.body
                 .setSize(50, 70, false)
                 .setOffset(this.player.frame.x, this.player.frame.y + 30);
             this.player.play('down');
         }
 
-        if (!keyboard(this.keyboard, 's') && !gamepad(this.gamepad, 'down')) {
+        if (!keyboard('s') && !gamepad('down')) {
             this.player.body
                 .setSize(50, 100, false)
                 .setOffset(this.player.frame.x, this.player.frame.y);
@@ -576,11 +604,11 @@ class Game extends Phaser.Scene {
 
         this.player.setVelocityX(this.currentSpeed);
 
-        if (keyboard(this.keyboard, 'enter') || gamepad(this.gamepad, 'y')) {
+        if (keyboard('enter') || gamepad('y')) {
             this.update_reset();
         }
 
-        if (keyboard(this.keyboard, 'esc') || gamepad(this.gamepad, 'start')) {
+        if (keyboard('esc') || gamepad('start')) {
             score = null;
             this.update_reset();
             this.scene.start('Menu');
@@ -601,11 +629,12 @@ const config = {
         target: 60,
         forceSetTimeOut: true,
     },
-    width: window.innerWidth * window.devicePixelRatio,
-    height: window.innerHeight * window.devicePixelRatio,
+    width: window.innerWidth,
+    height: window.innerHeight,
     input: {
         gamepad: true,
     },
+    zoom: window.devicePixelRatio,
     parent: 'game',
     physics: {
         default: 'arcade',
@@ -621,7 +650,7 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: [Menu, Game],
+    scene: [Preload, Menu, Game],
     type: Phaser.CANVAS,
 };
 
