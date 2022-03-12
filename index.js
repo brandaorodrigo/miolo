@@ -281,11 +281,29 @@ class Game extends Phaser.Scene {
     }
 
     create() {
+        // control -------------------------------------------------------------
         this.keyboard = keyboard_find(this);
         this.gamepad = null;
 
+        // world ---------------------------------------------------------------
+        this.cameras.main.setBackgroundColor(0xdcdcdc);
+        this.add
+            .tileSprite(0, height - 300, width * 10, 500, 'sky')
+            .setScrollFactor(0.05)
+            .setDepth(10);
+
+        this.add
+            .tileSprite(0, height - 40, width * 10, 450, 'mount')
+            .setScrollFactor(0.2)
+            .setDepth(12);
+
+        this.add
+            .tileSprite(0, height - 65, width * 10, 130, 'first')
+            .setScrollFactor(6)
+            .setDepth(80);
+
         // config ==============================================================
-        const { width, height } = this.sys.game.canvas;
+        //const { width, height } = this.sys.game.canvas;
 
         // player ==============================================================
 
@@ -460,24 +478,6 @@ class Game extends Phaser.Scene {
             this.update_reset();
             this.scene.start('Menu');
         });
-
-        // sky =================================================================
-
-        this.cameras.main.setBackgroundColor(0xdcdcdc);
-        this.add
-            .tileSprite(0, height - 300, width * 10, 500, 'sky')
-            .setScrollFactor(0.05)
-            .setDepth(10);
-
-        this.add
-            .tileSprite(0, height - 40, width * 10, 450, 'mount')
-            .setScrollFactor(0.2)
-            .setDepth(12);
-
-        this.add
-            .tileSprite(0, height - 65, width * 10, 130, 'first')
-            .setScrollFactor(6)
-            .setDepth(80);
 
         // text ================================================================
 
