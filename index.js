@@ -46,6 +46,7 @@ const gamepad_find = (that) => {
     let found = false;
     if (that.input.gamepad.total !== 0) {
         const pads = that.input.gamepad.gamepads;
+        // const pad = this.input.gamepad.getPad(0);
         for (let i = 0; i < pads.length; i++) {
             if (pads[i]) {
                 found = pads[i];
@@ -58,26 +59,33 @@ const gamepad_find = (that) => {
 
 const gamepad_press = (gamepad, button) => {
     if (gamepad) {
-        const buttons = gamepad.buttons;
-        if (buttons[0]?.pressed && button === 'a') return true;
-        if (buttons[1]?.pressed && button === 'b') return true;
-        if (buttons[2]?.pressed && button === 'x') return true;
-        if (buttons[3]?.pressed && button === 'y') return true;
-        if (buttons[4]?.pressed && button === 'l1') return true;
-        if (buttons[5]?.pressed && button === 'r1') return true;
-        if (buttons[6]?.pressed && button === 'l2') return true;
-        if (buttons[7]?.pressed && button === 'r2') return true;
-        if (buttons[8]?.pressed && button === 'select') return true;
-        if (buttons[9]?.pressed && button === 'start') return true;
-        if (buttons[10]?.pressed && button === 'l3') return true;
-        if (buttons[11]?.pressed && button === 'r3') return true;
-        if (gamepad.down && button === 'down') return true;
-        if (gamepad.left && button === 'left') return true;
-        if (gamepad.left && button === 'left') return true;
-        if (gamepad.right && button === 'right') return true;
-        if (gamepad.up && button === 'up') return true;
+        if (gamepad?.buttons) {
+            const buttons = gamepad.buttons;
+            if (buttons[0]?.pressed && button === 'a') return 1;
+            if (buttons[1]?.pressed && button === 'b') return 1;
+            if (buttons[2]?.pressed && button === 'x') return 1;
+            if (buttons[3]?.pressed && button === 'y') return 1;
+            if (buttons[4]?.pressed && button === 'l1') return 1;
+            if (buttons[5]?.pressed && button === 'r1') return 1;
+            if (buttons[6]?.pressed && button === 'l2') return 1;
+            if (buttons[7]?.pressed && button === 'r2') return 1;
+            if (buttons[8]?.pressed && button === 'select') return 1;
+            if (buttons[9]?.pressed && button === 'start') return 1;
+            if (buttons[10]?.pressed && button === 'l3') return 1;
+            if (buttons[11]?.pressed && button === 'r3') return 1;
+        }
+
+        if (button === 'down') return gamepad.down;
+        if (button === 'left') return gamepad.left;
+        if (button === 'right') return gamepad.right;
+        if (button === 'up') return gamepad.up;
+
+        if (button === 'axis1y') return gamepad.leftStick.y;
+        if (button === 'axis1x') return gamepad.leftStick.x;
+        if (button === 'axis2y') return gamepad.rightStick.y;
+        if (button === 'axis2x') return gamepad.rightStick.x;
     }
-    return false;
+    return 0;
 };
 
 // utils =======================================================================
@@ -276,6 +284,7 @@ class Game extends Phaser.Scene {
         super('Game');
         this.maxSpeed = 2000;
         this.currentSpeed = 0;
+        this.monsterSpeed = 0;
         this.jumping = false;
         this.allTime = 0;
     }
@@ -395,8 +404,20 @@ class Game extends Phaser.Scene {
 
             if (number === 7) {
                 x = 50 + 360;
+                y = 75;
+                obs = '50x50';
+            }
+
+            if (number === 8) {
+                x = 50 + 360;
                 y = 100;
                 obs = '100x100';
+            }
+
+            if (number === 9) {
+                x = 25 + 260;
+                y = 75;
+                obs = '50x50';
             }
 
             if (number === 0 && countZeros < 3) {
@@ -438,20 +459,20 @@ class Game extends Phaser.Scene {
                 obstacleX += x;
             }
 
-            if (number == 7 && obs !== '') {
+            if (number > 6 && number < 9 && obs !== '') {
                 countZeros = 0;
                 obstacleX += x;
                 const current = this.physics.add
                     .sprite(obstacleX, height - y, obs)
+                    .setCollideWorldBounds(true)
                     .setDepth(20);
-                current.setCollideWorldBounds(true).setDepth(20);
                 this.physics.add.collider(current, ground);
                 this.physics.add.collider(current, this.player, () => {
                     this.update_reset();
                 });
                 this.time.addEvent({
                     callback: () => {
-                        if (this.currentSpeed > 0) current.setVelocityY(-1000);
+                        if (this.currentSpeed > 0) current.setVelocityY(-740);
                     },
                     callbackScope: this,
                     delay: 4000,
@@ -459,7 +480,49 @@ class Game extends Phaser.Scene {
                 });
                 obstacleX += x;
             }
+
+            if (number == 9 && obs !== '') {
+                countZeros = 0;
+                obstacleX += x;
+                let odd = true;
+                const current = this.physics.add
+                    .staticSprite(obstacleX, height - y, obs)
+                    .setDepth(20);
+                this.physics.add.collider(current, this.player, () => {
+                    this.update_reset();
+                });
+                this.time.addEvent({
+                    callback: () => {
+                        current.setY(height - (odd ? 275 : 75));
+                        odd = !odd;
+                    },
+                    callbackScope: this,
+                    delay: 1000,
+                    loop: true,
+                });
+                obstacleX += x;
+            }
         }
+
+        // finish ==============================================================
+
+        const start = this.physics.add
+            .sprite(200, height - 200, 'finish')
+            .setCollideWorldBounds(true)
+            .setDepth(20);
+        this.physics.add.collider(start, ground);
+        this.physics.add.collider(start, this.player, () => {
+            this.update_reset();
+        });
+
+        this.time.addEvent({
+            callback: () => {
+                start.setVelocityX(this.currentSpeed + 3);
+            },
+            callbackScope: this,
+            delay: 10,
+            loop: true,
+        });
 
         // finish ==============================================================
 
@@ -516,14 +579,14 @@ class Game extends Phaser.Scene {
         const gamepad = (button) => gamepad_press(this.gamepad, button);
 
         // if ((keyboard('d') || gamepad('right')) && this.player.body.onFloor()) {
-        if (keyboard('d') || gamepad('right')) {
+        if (keyboard('d') || gamepad('right') || gamepad('axis1x') > 0) {
             if (this.currentSpeed < this.maxSpeed) {
                 this.currentSpeed += 2;
             }
         }
 
         // if (!keyboard('d') && !gamepad('right') && this.player.body.onFloor()) {
-        if (!keyboard('d') && !gamepad('right')) {
+        if (!keyboard('d') && !gamepad('right') && gamepad('axis1x') === 0) {
             if (this.currentSpeed > 0) {
                 this.currentSpeed -= 1;
             } else {
@@ -532,7 +595,7 @@ class Game extends Phaser.Scene {
         }
 
         //if ((keyboard('a') || gamepad('left')) && this.player.body.onFloor()) {
-        if (keyboard('a') || gamepad('left')) {
+        if (keyboard('a') || gamepad('left') || gamepad('axis1x') < 0) {
             if (this.currentSpeed !== 0) {
                 this.currentSpeed -= 4;
                 if (this.currentSpeed < 0) {
@@ -556,14 +619,14 @@ class Game extends Phaser.Scene {
             }
         }
 
-        if (keyboard('s') || gamepad('down')) {
+        if (keyboard('s') || gamepad('down') || gamepad('axis1y') > 0.4) {
             this.player.body
                 .setSize(50, 70, false)
                 .setOffset(this.player.frame.x, this.player.frame.y + 30);
             this.player.play('down');
         }
 
-        if (!keyboard('s') && !gamepad('down')) {
+        if (!keyboard('s') && !gamepad('down') && gamepad('axis1y') < 0.4) {
             this.player.body
                 .setSize(50, 100, false)
                 .setOffset(this.player.frame.x, this.player.frame.y);
