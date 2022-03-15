@@ -97,6 +97,15 @@ class Preload extends Phaser.Scene {
             frameWidth: 100,
             frameHeight: 50,
         });
+
+        this.load.spritesheet('50x10_fix', 'assets/grid.png', {
+            frameWidth: 50,
+            frameHeight: 10,
+        });
+        this.load.spritesheet('100x10_fix', 'assets/grid.png', {
+            frameWidth: 100,
+            frameHeight: 10,
+        });
     }
 
     create() {
@@ -229,6 +238,7 @@ class Game extends Phaser.Scene {
             .setDepth(80);
 
         // config ==============================================================
+
         //const { width, height } = this.sys.game.canvas;
 
         // player ==============================================================
@@ -349,8 +359,16 @@ class Game extends Phaser.Scene {
                     .staticSprite(obstacleX, height - y, obs)
                     .setDepth(20);
                 this.physics.add.collider(current, this.player, () => {
+                    this.update_reset();
+                });
+
+                const current2 = this.physics.add
+                    .staticSprite(obstacleX, height - y - 30, '100x10_fix')
+                    .setDepth(20);
+                this.physics.add.collider(current2, this.player, () => {
                     //this.update_reset();
                 });
+
                 obstacleX += x;
             }
 

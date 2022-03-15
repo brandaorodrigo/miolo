@@ -19,6 +19,7 @@ class Gamepad {
 
     press(button) {
         if (this.gamepad) {
+            // buttons
             if (this.gamepad?.buttons) {
                 const buttons = this.gamepad.buttons;
                 if (buttons[0]?.pressed && button === 'a') return 1;
@@ -34,12 +35,12 @@ class Gamepad {
                 if (buttons[10]?.pressed && button === 'l3') return 1;
                 if (buttons[11]?.pressed && button === 'r3') return 1;
             }
-
+            // arrows
             if (button === 'down') return this.gamepad.down;
             if (button === 'left') return this.gamepad.left;
             if (button === 'right') return this.gamepad.right;
             if (button === 'up') return this.gamepad.up;
-
+            // axis
             if (button === 'axis1y') return this.gamepad.leftStick.y;
             if (button === 'axis1x') return this.gamepad.leftStick.x;
             if (button === 'axis2y') return this.gamepad.rightStick.y;
@@ -53,28 +54,33 @@ class Keyboard {
     constructor(scene) {
         this.scene = scene;
         const keys = [
-            'a',
-            'alt',
-            'backspace',
-            'c',
-            'ctrl',
-            'd',
-            'down',
-            'e',
-            'enter',
-            'esc',
-            'left',
+            // letters
             'q',
-            'r',
-            'right',
-            's',
-            'shift',
-            'space',
-            'tab',
-            'top',
             'w',
-            'x',
+            'e',
+            'r',
+            'a',
+            's',
+            'd',
+            'f',
             'z',
+            'x',
+            'c',
+            'v',
+            // arrows
+            'up',
+            'down',
+            'left',
+            'right',
+            // specials
+            'esc',
+            'tab',
+            'shift',
+            'ctrl',
+            'alt',
+            'space',
+            'enter',
+            'backspace',
         ];
         const map = [];
         keys.forEach((key) => {
@@ -96,6 +102,7 @@ class Keyboard {
     }
 }
 
+/*
 class Example extends Phaser.Scene {
     constructor() {
         super('Example');
@@ -115,3 +122,4 @@ class Example extends Phaser.Scene {
         }
     }
 }
+*/
