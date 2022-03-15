@@ -7,87 +7,6 @@ let stage = null;
 let score = null;
 let record = null;
 
-// controls ====================================================================
-
-const keyboard_find = (that) => {
-    const keys = [
-        'a',
-        'alt',
-        'backspace',
-        'c',
-        'ctrl',
-        'd',
-        'e',
-        'enter',
-        'esc',
-        'q',
-        'r',
-        's',
-        'shift',
-        'space',
-        'tab',
-        'w',
-        'x',
-        'z',
-    ];
-    const map = [];
-    keys.forEach((key) => {
-        map[key] = Phaser.Input.Keyboard.KeyCodes[key.toUpperCase()];
-    });
-    return that.input.keyboard.addKeys(map);
-};
-
-const keyboard_press = (keyboard, button) => {
-    if (keyboard && keyboard[button] && keyboard[button].isDown) return true;
-    else return false;
-};
-
-const gamepad_find = (that) => {
-    let found = false;
-    if (that.input.gamepad.total !== 0) {
-        const pads = that.input.gamepad.gamepads;
-        // const pad = this.input.gamepad.getPad(0);
-        for (let i = 0; i < pads.length; i++) {
-            if (pads[i]) {
-                found = pads[i];
-                break;
-            }
-        }
-    }
-    return found;
-};
-
-const gamepad_press = (gamepad, button) => {
-    if (gamepad) {
-        if (gamepad?.buttons) {
-            const buttons = gamepad.buttons;
-            if (buttons[0]?.pressed && button === 'a') return 1;
-            if (buttons[1]?.pressed && button === 'b') return 1;
-            if (buttons[2]?.pressed && button === 'x') return 1;
-            if (buttons[3]?.pressed && button === 'y') return 1;
-            if (buttons[4]?.pressed && button === 'l1') return 1;
-            if (buttons[5]?.pressed && button === 'r1') return 1;
-            if (buttons[6]?.pressed && button === 'l2') return 1;
-            if (buttons[7]?.pressed && button === 'r2') return 1;
-            if (buttons[8]?.pressed && button === 'select') return 1;
-            if (buttons[9]?.pressed && button === 'start') return 1;
-            if (buttons[10]?.pressed && button === 'l3') return 1;
-            if (buttons[11]?.pressed && button === 'r3') return 1;
-        }
-
-        if (button === 'down') return gamepad.down;
-        if (button === 'left') return gamepad.left;
-        if (button === 'right') return gamepad.right;
-        if (button === 'up') return gamepad.up;
-
-        if (button === 'axis1y') return gamepad.leftStick.y;
-        if (button === 'axis1x') return gamepad.leftStick.x;
-        if (button === 'axis2y') return gamepad.rightStick.y;
-        if (button === 'axis2x') return gamepad.rightStick.x;
-    }
-    return 0;
-};
-
 // utils =======================================================================
 
 const convert_time = (time) => {
@@ -198,8 +117,8 @@ class Menu extends Phaser.Scene {
     }
 
     create() {
-        this.keyboard = keyboard_find(this);
-        this.gamepad = null;
+        this.gamepad = new Gamepad(this);
+        this.keyboard = new Keyboard(this);
 
         if (record != null && String(record) === String(score)) {
             this.recordText = this.add.text(100, 100, 'NOVO RECORDE!', {
@@ -253,9 +172,8 @@ class Menu extends Phaser.Scene {
     }
 
     update() {
-        if (!this.gamepad) this.gamepad = gamepad_find(this);
-        const keyboard = (button) => keyboard_press(this.keyboard, button);
-        const gamepad = (button) => gamepad_press(this.gamepad, button);
+        const keyboard = (button) => this.keyboard.press(button);
+        const gamepad = (button) => this.gamepad.press(button);
 
         if (gamepad('a') || keyboard('enter')) {
             this.startText?.setText('CARREGANDO...');
@@ -271,7 +189,7 @@ class Menu extends Phaser.Scene {
             score = null;
             record = null;
             setTimeout(() => {
-                this.scene.restart();
+                this.scene.start('Preload');
             }, 200);
         }
     }
@@ -290,9 +208,8 @@ class Game extends Phaser.Scene {
     }
 
     create() {
-        // control -------------------------------------------------------------
-        this.keyboard = keyboard_find(this);
-        this.gamepad = null;
+        this.gamepad = new Gamepad(this);
+        this.keyboard = new Keyboard(this);
 
         // world ---------------------------------------------------------------
         this.cameras.main.setBackgroundColor(0xdcdcdc);
@@ -432,7 +349,7 @@ class Game extends Phaser.Scene {
                     .staticSprite(obstacleX, height - y, obs)
                     .setDepth(20);
                 this.physics.add.collider(current, this.player, () => {
-                    this.update_reset();
+                    //this.update_reset();
                 });
                 obstacleX += x;
             }
@@ -446,7 +363,7 @@ class Game extends Phaser.Scene {
                     .setDepth(20);
                 this.physics.add.collider(current, ground);
                 this.physics.add.collider(current, this.player, () => {
-                    this.update_reset();
+                    //this.update_reset();
                 });
                 this.time.addEvent({
                     callback: () => {
@@ -574,9 +491,8 @@ class Game extends Phaser.Scene {
     }
 
     update() {
-        if (!this.gamepad) this.gamepad = gamepad_find(this);
-        const keyboard = (button) => keyboard_press(this.keyboard, button);
-        const gamepad = (button) => gamepad_press(this.gamepad, button);
+        const keyboard = (button) => this.keyboard.press(button);
+        const gamepad = (button) => this.gamepad.press(button);
 
         // if ((keyboard('d') || gamepad('right')) && this.player.body.onFloor()) {
         if (keyboard('d') || gamepad('right') || gamepad('axis1x') > 0) {
@@ -673,7 +589,7 @@ const config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 1000 },
-            debug: false,
+            debug: true,
         },
     },
     render: {
